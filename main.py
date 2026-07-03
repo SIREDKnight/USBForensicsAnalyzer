@@ -13,7 +13,7 @@ def menu():
     print("\nFORENSIC MENU")
     print("=" * 70)
     print("1. Run full acquisition")
-    print("2. View case report (JSON)")
+    print("2. View forensic PDF report")
     print("3. Query device by serial")
     print("4. View full timeline")
     print("5. Exit")
@@ -49,26 +49,24 @@ def main():
             print(f"[+] Correlations: {len(correlations)}")
 
         # -------------------------
-        # 2. VIEW REPORT
+        # 2. VIEW PDF REPORT
         # -------------------------
         elif choice == "2":
 
-            try:
-                from pathlib import Path
-                report_path = Path("output/case_report.json")
+            from pathlib import Path
+            import os
 
-                if report_path.exists():
+            report_path = Path("output/case_report.pdf")
 
-                    print("\n[CASE REPORT]")
-                    print("=" * 70)
+            if report_path.exists():
 
-                    print(report_path.read_text(encoding="utf-8"))
+                print("\n[+] Opening forensic PDF report...")
 
-                else:
-                    print("\n[-] No report found. Run option 1 first.")
+                os.startfile(report_path)
 
-            except Exception as e:
-                print(f"Error: {e}")
+            else:
+
+                print("\n[-] No PDF report found. Run option 1 first.")
 
         # -------------------------
         # 3. QUERY DEVICE
@@ -102,7 +100,7 @@ def main():
         # -------------------------
         elif choice == "4":
 
-            print("\n[FULL TIMELINE]")
+            print("\n[FULL FORENSIC TIMELINE]")
             print("=" * 70)
 
             if not timeline:
@@ -121,6 +119,7 @@ def main():
             break
 
         else:
+
             print("\n[-] Invalid option")
 
 
