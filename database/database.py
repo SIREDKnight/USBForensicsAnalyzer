@@ -13,25 +13,62 @@ class EvidenceDatabase:
 
     def create_tables(self):
 
-        self.cursor.execute("""
-            CREATE TABLE IF NOT EXISTS usb_devices (
+     self.cursor.execute("""
+        CREATE TABLE IF NOT EXISTS usb_devices (
 
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
 
-                manufacturer TEXT,
+            manufacturer TEXT,
+            product TEXT,
+            revision TEXT,
+            serial_number TEXT UNIQUE,
+            registry_path TEXT
 
-                product TEXT,
+        )
+    """)
 
-                revision TEXT,
+     self.cursor.execute("""
+        CREATE TABLE IF NOT EXISTS mounted_devices (
 
-                serial_number TEXT UNIQUE,
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
 
-                registry_path TEXT
+            drive_letter TEXT,
 
-            )
-        """)
+            volume_guid TEXT,
 
-        self.connection.commit()
+            registry_name TEXT
+        )
+    """)
+
+     self.cursor.execute("""
+        CREATE TABLE IF NOT EXISTS event_logs (
+
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+
+            event_id INTEGER,
+
+            source TEXT,
+
+            timestamp TEXT,
+
+            description TEXT
+        )
+    """)
+
+     self.cursor.execute("""
+        CREATE TABLE IF NOT EXISTS timeline (
+
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+
+            event_time TEXT,
+
+            artifact TEXT,
+
+            description TEXT
+        )
+    """)
+
+     self.connection.commit()
 
     def insert_device(self, device):
 

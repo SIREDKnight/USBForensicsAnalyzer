@@ -2,13 +2,14 @@ import re
 import winreg
 
 from models.device import USBDevice
+from collector.base_collector import BaseCollector
 
 
-class USBRegistryCollector:
+class USBRegistryCollector(BaseCollector):
 
     REGISTRY_PATH = r"SYSTEM\CurrentControlSet\Enum\USBSTOR"
 
-    def get_devices(self):
+    def collect(self):
 
         devices = []
 

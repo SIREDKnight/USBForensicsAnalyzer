@@ -1,6 +1,5 @@
-from collector.registry import USBRegistryCollector
-from reports.json_report import JSONReport
-from database.database import EvidenceDatabase
+from manager.evidence_manager import EvidenceManager
+
 
 def banner():
 
@@ -13,26 +12,17 @@ def main():
 
     banner()
 
-    collector = USBRegistryCollector()
-    database = EvidenceDatabase()
+    manager = EvidenceManager()
 
-    devices = collector.get_devices()
-
-    if not devices:
-
-        print("No USB devices found.")
-        return
+    devices = manager.collect()
 
     for number, device in enumerate(devices, start=1):
-
-        database.insert_device(device)
 
         print(f"\nUSB Device #{number}")
         print("-" * 70)
         print(device)
 
-    JSONReport.save(devices)
-    database.close()
+    manager.close()
 
 
 if __name__ == "__main__":
