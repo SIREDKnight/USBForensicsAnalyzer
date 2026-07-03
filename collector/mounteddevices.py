@@ -1,3 +1,4 @@
+from os import name
 import winreg
 
 from collector.base_collector import BaseCollector
@@ -25,16 +26,26 @@ class MountedDevicesCollector(BaseCollector):
 
                 name, value, reg_type = winreg.EnumValue(key, i)
 
+                drive_letter = None
+
                 if name.startswith("\\DosDevices\\"):
 
                     drive_letter = name.replace("\\DosDevices\\", "")
 
-                    devices.append(
-                        MountedDevice(
-                            drive_letter,
-                            name
-                        )
-                    )
+                elif name.startswith("\\??\\Volume"):
+
+                # Volume GUID mapping
+                    continue
+
+            if drive_letter:
+
+                devices.append(
+                MountedDevice(
+                    drive_letter=drive_letter,
+                    registry_name=name,
+                    volume_guid=None
+            )
+        )
 
         except Exception as e:
 

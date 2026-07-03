@@ -124,6 +124,24 @@ class EvidenceDatabase:
 
      self.connection.commit()
 
+    def insert_timeline_event(self, event_time, artifact, description):
+
+     self.cursor.execute("""
+        INSERT INTO timeline (
+            event_time,
+            artifact,
+            description
+        )
+        VALUES (?, ?, ?)
+    """,
+    (
+        event_time,
+        artifact,
+        description
+    ))
+
+     self.connection.commit() 
+
     def close(self):
 
         self.connection.close()
