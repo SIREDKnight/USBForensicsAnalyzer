@@ -140,7 +140,17 @@ class EvidenceDatabase:
         description
     ))
 
-     self.connection.commit() 
+     self.connection.commit()
+
+    def get_timeline(self):
+
+     self.cursor.execute("""
+        SELECT event_time, artifact, description
+        FROM timeline
+        ORDER BY event_time ASC
+    """)
+
+     return self.cursor.fetchall() 
 
     def close(self):
 

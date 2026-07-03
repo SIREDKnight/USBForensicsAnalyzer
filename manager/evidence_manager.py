@@ -48,6 +48,22 @@ class EvidenceManager:
 
         return correlations
     
+    def build_timeline_report(self):
+
+        rows = self.database.get_timeline()
+
+        timeline = []
+
+        for row in rows:
+
+            timeline.append({
+                "event_time": row[0],
+                "artifact": row[1],
+                "description": row[2]
+        })
+
+        return timeline
+    
     def collect(self):
 
         # -------------------------
@@ -84,8 +100,10 @@ class EvidenceManager:
         JSONReport.save(devices)
 
         correlations = self.correlate(devices, mounted)
+        timeline = self.build_timeline_report()
 
-        return devices, mounted, correlations
+        return devices, mounted, correlations, timeline
+    
 
     def close(self):
 
