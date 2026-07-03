@@ -64,6 +64,21 @@ class EvidenceManager:
 
         return timeline
     
+    def query_device(self, serial_number):
+
+        device = self.database.get_device_by_serial(serial_number)
+        timeline = self.database.get_timeline_by_artifact("USB_DEVICE")
+
+        return device, timeline
+    
+    def full_analysis(self):
+
+        return {
+            "devices": self.database.get_all_devices(),
+            "mounted": self.database.get_all_mounted(),
+            "timeline": self.database.get_timeline()
+        }
+    
     def collect(self):
 
         # -------------------------

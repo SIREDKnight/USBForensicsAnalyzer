@@ -151,6 +151,45 @@ class EvidenceDatabase:
     """)
 
      return self.cursor.fetchall() 
+    
+    def get_all_devices(self):
+
+        self.cursor.execute("""
+        SELECT manufacturer, product, revision, serial_number, registry_path
+        FROM usb_devices
+        """)
+
+        return self.cursor.fetchall()
+    
+    def get_device_by_serial(self, serial):
+
+        self.cursor.execute("""
+        SELECT manufacturer, product, revision, serial_number, registry_path
+        FROM usb_devices
+        WHERE serial_number = ?
+        """, (serial,))
+
+        return self.cursor.fetchone()
+    
+    def get_all_mounted(self):
+
+        self.cursor.execute("""
+        SELECT drive_letter, registry_name
+        FROM mounted_devices
+        """)
+
+        return self.cursor.fetchall()
+    
+    def get_timeline_by_artifact(self, artifact):
+
+        self.cursor.execute("""
+        SELECT event_time, artifact, description
+        FROM timeline
+        WHERE artifact = ?
+        ORDER BY event_time
+        """, (artifact,))
+
+        return self.cursor.fetchall()
 
     def close(self):
 
