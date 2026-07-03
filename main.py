@@ -59,9 +59,9 @@ def main():
         print("-" * 70)
 
     # -------------------------
-    # CORRELATIONS
+    # CORRELATIONS (WITH CONFIDENCE)
     # -------------------------
-    print("\nCORRELATIONS")
+    print("\nCORRELATIONS (WITH CONFIDENCE)")
     print("=" * 70)
 
     if correlations:
@@ -71,6 +71,7 @@ def main():
             print(f"Serial Number : {c['serial_number']}")
             print(f"Drive Letter  : {c['drive_letter']}")
             print(f"Product       : {c['product']}")
+            print(f"Confidence    : {c['confidence']}%")
             print("-" * 70)
 
     else:
@@ -88,7 +89,7 @@ def main():
         print("-" * 70)
 
     # -------------------------
-    # FORENSIC QUERY DEMO
+    # FORENSIC QUERY ENGINE DEMO
     # -------------------------
     print("\nFORENSIC QUERY ENGINE DEMO")
     print("=" * 70)
