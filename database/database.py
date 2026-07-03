@@ -69,7 +69,7 @@ class EvidenceDatabase:
     """)
 
      self.connection.commit()
-
+     
     def insert_device(self, device):
 
         self.cursor.execute("""
@@ -99,6 +99,30 @@ class EvidenceDatabase:
         ))
 
         self.connection.commit()
+
+    def insert_mounted_device(self, mounted):
+
+     self.cursor.execute("""
+
+        INSERT INTO mounted_devices(
+
+            drive_letter,
+            registry_name
+
+        )
+
+        VALUES (?, ?)
+
+    """,
+
+    (
+
+        mounted.drive_letter,
+        mounted.registry_name
+
+    ))
+
+     self.connection.commit()
 
     def close(self):
 

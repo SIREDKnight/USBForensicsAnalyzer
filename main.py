@@ -14,13 +14,20 @@ def main():
 
     manager = EvidenceManager()
 
-    devices = manager.collect()
+    devices, mounted = manager.collect()
 
     for number, device in enumerate(devices, start=1):
 
         print(f"\nUSB Device #{number}")
         print("-" * 70)
         print(device)
+
+        print("\nMounted Devices")
+        print("=" * 70)
+
+        for item in mounted:
+          print(item)
+          print("-" * 70)
 
     manager.close()
 
