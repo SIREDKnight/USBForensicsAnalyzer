@@ -1,12 +1,12 @@
 from datetime import datetime
-import hashlib
 
 from collector.registry import USBRegistryCollector
 from collector.mounteddevices import MountedDevicesCollector
 from database.database import EvidenceDatabase
 from reports.case_report import CaseReport
 from reports.pdf_report import PDFReport
-
+from utils.hash_utils import HashUtils
+from reports.case_export import CaseExport
 
 class EvidenceManager:
 
@@ -16,36 +16,33 @@ class EvidenceManager:
         self.mounted_collector = MountedDevicesCollector()
         self.database = EvidenceDatabase()
 
-        # -------------------------
-        # CREATE CASE
-        # -------------------------
         self.case_id = self.database.create_case(
             "USB Investigation Case 001",
             "Analyst"
         )
 
     # -------------------------
-    # TIMELINE LOGGER
+    # TIMELINE
     # -------------------------
     def add_timeline(self, artifact, description):
 
         event_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
+        record_hash = HashUtils.sha256({
+            "time": event_time,
+            "artifact": artifact,
+            "description": description
+        })
+
         self.database.insert_timeline_event(
             event_time,
             artifact,
-            description
+            description,
+            record_hash
         )
 
     # -------------------------
-    # HASH (for future integrity use)
-    # -------------------------
-    def generate_hash(self, data):
-
-        return hashlib.sha256(str(data).encode()).hexdigest()
-
-    # -------------------------
-    # CORRELATION ENGINE
+    # CORRELATION
     # -------------------------
     def correlate(self, devices, mounted):
 
@@ -76,49 +73,45 @@ class EvidenceManager:
 
                     self.add_timeline(
                         "CORRELATION",
-                        f"{device.serial_number} linked to {mount.drive_letter} ({score}%)"
+                        f"{device.serial_number} → {mount.drive_letter} ({score}%)"
                     )
 
         return correlations
 
     # -------------------------
-    # MAIN COLLECTION PIPELINE
+    # MAIN PIPELINE
     # -------------------------
     def collect(self):
 
-        # USB DEVICES
         devices = self.registry.collect()
 
         for device in devices:
 
-            self.database.insert_device(device, self.case_id)
+            record_hash = HashUtils.sha256(device.__dict__)
+
+            self.database.insert_device(device, self.case_id, record_hash)
 
             self.add_timeline(
                 "USB_DEVICE",
-                f"Detected USB: {device.product} ({device.serial_number})"
+                f"Detected {device.product}"
             )
 
-        # MOUNTED DEVICES
         mounted = self.mounted_collector.collect()
 
         for item in mounted:
 
-            self.database.insert_mounted_device(item, self.case_id)
+            record_hash = HashUtils.sha256(item.__dict__)
+
+            self.database.insert_mounted_device(item, self.case_id, record_hash)
 
             self.add_timeline(
                 "MOUNTED_DEVICE",
-                f"Detected mount: {item.drive_letter}"
+                f"Detected {item.drive_letter}"
             )
 
-        # CORRELATIONS
         correlations = self.correlate(devices, mounted)
-
-        # TIMELINE FETCH
         timeline = self.database.get_timeline()
 
-        # -------------------------
-        # GENERATE FORENSIC REPORT
-        # -------------------------
         CaseReport.generate(
             self.database.get_latest_case(),
             devices,
@@ -138,18 +131,26 @@ class EvidenceManager:
         return devices, mounted, correlations, timeline
 
     # -------------------------
-    # QUERY ENGINE
+    # QUERY
     # -------------------------
-    def query_device(self, serial_number):
+    def query_device(self, serial):
 
-        device = self.database.get_device_by_serial(serial_number)
-        timeline = self.database.get_timeline_by_artifact("USB_DEVICE")
+        device = self.database.get_device_by_serial(serial)
+        timeline = self.database.get_timeline()
 
         return device, timeline
+    
+    def export_case(self):
+
+        case = self.database.get_latest_case()
+
+        if case:
+            CaseExport.export(case[0])
+        else:
+            print("No case found")
 
     # -------------------------
-    # CLOSE CONNECTION
+    # CLOSE
     # -------------------------
     def close(self):
-
         self.database.close()
