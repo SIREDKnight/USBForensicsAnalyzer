@@ -4,8 +4,19 @@ from manager.evidence_manager import EvidenceManager
 def banner():
 
     print("=" * 70)
-    print("USB FORENSICS ANALYZER - DFIR EDITION")
+    print("USB FORENSICS ANALYZER - INTERACTIVE MODE")
     print("=" * 70)
+
+
+def menu():
+
+    print("\nFORENSIC MENU")
+    print("=" * 70)
+    print("1. Run full acquisition")
+    print("2. View case report (JSON)")
+    print("3. Query device by serial")
+    print("4. View full timeline")
+    print("5. Exit")
 
 
 def main():
@@ -14,113 +25,103 @@ def main():
 
     manager = EvidenceManager()
 
-    # -------------------------
-    # COLLECTION PHASE
-    # -------------------------
-    devices, mounted, correlations, timeline = manager.collect()
+    devices = []
+    mounted = []
+    correlations = []
+    timeline = []
 
-    # -------------------------
-    # CASE INFO
-    # -------------------------
-    case = manager.database.get_latest_case()
+    while True:
 
-    print("\nFORENSIC CASE INFO")
-    print("=" * 70)
+        menu()
 
-    if case:
-        print(f"Case ID      : {case[0]}")
-        print(f"Case Name    : {case[1]}")
-        print(f"Created At   : {case[2]}")
-        print(f"Investigator : {case[3]}")
-    else:
-        print("No case found")
+        choice = input("\nSelect option: ")
 
-    # -------------------------
-    # USB DEVICES
-    # -------------------------
-    print("\nUSB DEVICES")
-    print("=" * 70)
+        # -------------------------
+        # 1. RUN ACQUISITION
+        # -------------------------
+        if choice == "1":
 
-    for i, device in enumerate(devices, start=1):
+            devices, mounted, correlations, timeline = manager.collect()
 
-        print(f"\nDevice #{i}")
-        print("-" * 70)
-        print(device)
+            print("\n[+] Acquisition complete")
+            print(f"[+] Devices: {len(devices)}")
+            print(f"[+] Mounted: {len(mounted)}")
+            print(f"[+] Correlations: {len(correlations)}")
 
-    # -------------------------
-    # MOUNTED DEVICES
-    # -------------------------
-    print("\nMOUNTED DEVICES")
-    print("=" * 70)
+        # -------------------------
+        # 2. VIEW REPORT
+        # -------------------------
+        elif choice == "2":
 
-    for item in mounted:
+            try:
+                from pathlib import Path
+                report_path = Path("output/case_report.json")
 
-        print(item)
-        print("-" * 70)
+                if report_path.exists():
 
-    # -------------------------
-    # CORRELATIONS (WITH CONFIDENCE)
-    # -------------------------
-    print("\nCORRELATIONS (WITH CONFIDENCE)")
-    print("=" * 70)
+                    print("\n[CASE REPORT]")
+                    print("=" * 70)
 
-    if correlations:
+                    print(report_path.read_text(encoding="utf-8"))
 
-        for c in correlations:
+                else:
+                    print("\n[-] No report found. Run option 1 first.")
 
-            print(f"Serial Number : {c['serial_number']}")
-            print(f"Drive Letter  : {c['drive_letter']}")
-            print(f"Product       : {c['product']}")
-            print(f"Confidence    : {c['confidence']}%")
-            print("-" * 70)
+            except Exception as e:
+                print(f"Error: {e}")
 
-    else:
-        print("No correlations found.")
+        # -------------------------
+        # 3. QUERY DEVICE
+        # -------------------------
+        elif choice == "3":
 
-    # -------------------------
-    # FORENSIC TIMELINE
-    # -------------------------
-    print("\nFORENSIC TIMELINE")
-    print("=" * 70)
+            serial = input("Enter serial number: ")
 
-    for event in timeline:
+            device, device_timeline = manager.query_device(serial)
 
-        print(f"{event[0]} | {event[1]} | {event[2]}")
-        print("-" * 70)
+            print("\n[DEVICE RESULT]")
+            print("=" * 70)
 
-    # -------------------------
-    # FORENSIC QUERY ENGINE DEMO
-    # -------------------------
-    print("\nFORENSIC QUERY ENGINE DEMO")
-    print("=" * 70)
+            if device:
+                print(f"Manufacturer : {device[0]}")
+                print(f"Product      : {device[1]}")
+                print(f"Revision     : {device[2]}")
+                print(f"Serial       : {device[3]}")
+                print(f"Registry Path: {device[4]}")
+            else:
+                print("Device not found")
 
-    if devices:
+            print("\n[TIMELINE]")
+            print("=" * 70)
 
-        serial = devices[0].serial_number
+            for t in device_timeline:
+                print(f"{t[0]} | {t[1]} | {t[2]}")
 
-        device, usb_timeline = manager.query_device(serial)
+        # -------------------------
+        # 4. FULL TIMELINE
+        # -------------------------
+        elif choice == "4":
 
-        print("\nDEVICE LOOKUP RESULT")
-        print("-" * 70)
+            print("\n[FULL TIMELINE]")
+            print("=" * 70)
 
-        if device:
-            print(f"Manufacturer : {device[0]}")
-            print(f"Product      : {device[1]}")
-            print(f"Revision     : {device[2]}")
-            print(f"Serial       : {device[3]}")
-            print(f"Registry Path: {device[4]}")
+            if not timeline:
+                print("No timeline available. Run acquisition first.")
+            else:
+                for event in timeline:
+                    print(f"{event[0]} | {event[1]} | {event[2]}")
+
+        # -------------------------
+        # 5. EXIT
+        # -------------------------
+        elif choice == "5":
+
+            manager.close()
+            print("\n[+] Exiting forensic tool...")
+            break
+
         else:
-            print("Device not found")
-
-        print("\nDEVICE TIMELINE")
-        print("-" * 70)
-
-        for t in usb_timeline:
-
-            print(f"{t[0]} | {t[1]} | {t[2]}")
-            print("-" * 70)
-
-    manager.close()
+            print("\n[-] Invalid option")
 
 
 if __name__ == "__main__":

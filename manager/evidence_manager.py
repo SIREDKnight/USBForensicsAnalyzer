@@ -5,6 +5,7 @@ from collector.registry import USBRegistryCollector
 from collector.mounteddevices import MountedDevicesCollector
 from database.database import EvidenceDatabase
 from reports.case_report import CaseReport
+from reports.pdf_report import PDFReport
 
 
 class EvidenceManager:
@@ -119,6 +120,14 @@ class EvidenceManager:
         # GENERATE FORENSIC REPORT
         # -------------------------
         CaseReport.generate(
+            self.database.get_latest_case(),
+            devices,
+            mounted,
+            correlations,
+            timeline
+        )
+
+        PDFReport.generate(
             self.database.get_latest_case(),
             devices,
             mounted,

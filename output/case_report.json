@@ -1,8 +1,8 @@
 {
     "case": {
-        "id": 5,
+        "id": 7,
         "name": "USB Investigation Case 001",
-        "created_at": "2026-07-03 15:26:59",
+        "created_at": "2026-07-03 15:37:16",
         "investigator": "Analyst"
     },
     "usb_devices": [
@@ -69,6 +69,16 @@
         },
         {
             "event_time": "2026-07-03 18:27:00",
+            "artifact": "MOUNTED_DEVICE",
+            "description": "Detected mount: E:"
+        },
+        {
+            "event_time": "2026-07-03 18:37:22",
+            "artifact": "USB_DEVICE",
+            "description": "Detected USB: UDisk (6&1526ad36&0&_&0)"
+        },
+        {
+            "event_time": "2026-07-03 18:37:23",
             "artifact": "MOUNTED_DEVICE",
             "description": "Detected mount: E:"
         }
