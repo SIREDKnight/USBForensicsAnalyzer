@@ -42,6 +42,53 @@ class EvidenceManager:
             record_hash
         )
 
+    def build_timeline(self, devices, mounted, events):
+
+        timeline = []
+
+    # -------------------------
+    # 1. EVENT LOGS
+    # -------------------------
+        for e in events:
+
+            timeline.append({
+                "time": e["time"],
+                "artifact": "EVENT_LOG",
+                "description": f"Event {e['event_id']} - {e['source']}"
+            })
+
+        # -------------------------
+        # 2. USB DEVICES
+        # -------------------------
+        for d in devices:
+
+            timeline.append({
+                "time": "UNKNOWN",
+                "artifact": "USB_DEVICE",
+                "description": f"{d.product} ({d.serial_number}) detected"
+            })
+
+        # -------------------------
+        # 3. MOUNTED DEVICES
+        # -------------------------
+        for m in mounted:
+
+            timeline.append({
+                "time": "UNKNOWN",
+                "artifact": "MOUNT",
+                "description": f"{m.drive_letter} mounted"
+            })
+
+        # -------------------------
+        # SORT TIMELINE
+        # -------------------------
+        timeline_sorted = sorted(
+            timeline,
+            key=lambda x: x["time"] if x["time"] != "UNKNOWN" else ""
+        )
+
+        return timeline_sorted
+
     # -------------------------
     # CORRELATION
     # -------------------------
@@ -127,7 +174,23 @@ class EvidenceManager:
             )
 
         correlations = self.correlate(devices, mounted)
-        timeline = self.database.get_timeline()
+        
+        events = self.event_collector.collect()
+
+        for event in events:
+            self.database.insert_event_log(
+                event["event_id"],
+                event["source"],
+                event["time"],
+                event["description"]
+            )
+
+        devices = self.registry.collect()
+        mounted = self.mounted_collector.collect()
+
+        correlations = self.correlate(devices, mounted)
+
+        timeline = self.build_timeline(devices, mounted, events)
 
         CaseReport.generate(
             self.database.get_latest_case(),
