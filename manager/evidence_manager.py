@@ -7,6 +7,7 @@ from reports.case_report import CaseReport
 from reports.pdf_report import PDFReport
 from utils.hash_utils import HashUtils
 from reports.case_export import CaseExport
+from collector.event_logs import EventLogCollector
 
 class EvidenceManager:
 
@@ -15,11 +16,11 @@ class EvidenceManager:
         self.registry = USBRegistryCollector()
         self.mounted_collector = MountedDevicesCollector()
         self.database = EvidenceDatabase()
-
         self.case_id = self.database.create_case(
             "USB Investigation Case 001",
             "Analyst"
         )
+        self.event_collector = EventLogCollector()
 
     # -------------------------
     # TIMELINE
@@ -107,6 +108,22 @@ class EvidenceManager:
             self.add_timeline(
                 "MOUNTED_DEVICE",
                 f"Detected {item.drive_letter}"
+            )
+
+        event_logs = self.event_collector.collect()
+
+        for event in event_logs:
+
+            self.database.insert_event_log(
+                event["event_id"],
+                event["source"],
+                event["time"],
+                event["description"]
+            )
+
+            self.add_timeline(
+                "EVENT_LOG",
+                f"Event {event['event_id']} detected"
             )
 
         correlations = self.correlate(devices, mounted)

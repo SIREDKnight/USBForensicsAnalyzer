@@ -125,6 +125,22 @@ class EvidenceDatabase:
 
         self.connection.commit()
 
+    def insert_event_log(self, event_id, source, timestamp, description):
+
+     self.cursor.execute("""
+        INSERT INTO event_logs (
+            event_id, source, timestamp, description
+        )
+        VALUES (?, ?, ?, ?)
+    """, (
+        event_id,
+        source,
+        timestamp,
+        description
+    ))
+
+     self.connection.commit()    
+
     # -------------------------
     # CASES
     # -------------------------
