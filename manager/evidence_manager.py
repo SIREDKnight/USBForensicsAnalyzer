@@ -8,6 +8,7 @@ from reports.pdf_report import PDFReport
 from utils.hash_utils import HashUtils
 from reports.case_export import CaseExport
 from collector.event_logs import EventLogCollector
+from datetime import datetime
 
 class EvidenceManager:
 
@@ -45,6 +46,78 @@ class EvidenceManager:
     def build_timeline(self, devices, mounted, events):
 
         timeline = []
+
+        # -------------------------
+        # EVENT LOGS (REAL TIMESTAMPS)
+        # -------------------------
+        for e in events:
+
+            dt = self.normalize_time(e["time"])
+
+            if dt:
+
+                timeline.append({
+                    "time": dt,
+                    "artifact": "EVENT_LOG",
+                    "description": f"Event {e['event_id']} - {e['source']}"
+                })
+
+    # -------------------------
+    # USB DEVICES (NO REAL TIME YET)
+    # -------------------------
+        for d in devices:
+
+            timeline.append({
+                "time": None,
+                "artifact": "USB_DEVICE",
+                "description": f"{d.product} ({d.serial_number}) detected"
+            })
+
+    # -------------------------
+    # MOUNTED DEVICES (NO REAL TIME YET)
+    # -------------------------
+        for m in mounted:
+
+            timeline.append({
+                "time": None,
+                "artifact": "MOUNT",
+                "description": f"{m.drive_letter} mounted"
+            })
+
+    # -------------------------
+    # SORT WITH REAL TIMESTAMPS FIRST
+    # -------------------------
+        timeline_sorted = sorted(
+            timeline,
+            key=lambda x: x["time"] if x["time"] else datetime.min
+        )
+
+    # -------------------------
+    # FORMAT BACK TO STRING
+    # -------------------------
+        final_timeline = []
+
+        for t in timeline_sorted:
+
+            final_timeline.append({
+                "time": t["time"].strftime("%Y-%m-%d %H:%M:%S") if t["time"] else "UNKNOWN",
+                "artifact": t["artifact"],
+                "description": t["description"]
+            })
+
+        return final_timeline
+
+    def normalize_time(self, raw_time):
+
+        if raw_time in [None, "", "UNKNOWN"]:
+            return None
+
+        try:
+            # Event logs already come as datetime-like strings
+            dt = datetime.strptime(str(raw_time)[:19], "%Y-%m-%d %H:%M:%S")
+            return dt
+        except:
+            return None
 
     # -------------------------
     # 1. EVENT LOGS
