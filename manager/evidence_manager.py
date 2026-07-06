@@ -170,35 +170,57 @@ class EvidenceManager:
         correlations = []
 
         for device in devices:
+
             for mount in mounted:
 
                 score = 0
+                reasons = []
 
+                # -------------------------
+                # 1. SERIAL MATCH
+                # -------------------------
                 if device.serial_number in mount.registry_name:
+
                     score += 60
+                    reasons.append("Serial number match (+60)")
 
+                # -------------------------
+                # 2. PRODUCT MATCH
+                # -------------------------
                 if device.product.lower() in mount.registry_name.lower():
+
                     score += 20
+                    reasons.append("Product name match (+20)")
 
+                # -------------------------
+                # 3. USB KEYWORD BONUS
+                # -------------------------
                 if "USB" in mount.registry_name.upper():
-                    score += 10
 
+                    score += 10
+                    reasons.append("USB registry evidence (+10)")
+
+                # -------------------------
+                # FINAL DECISION
+                # -------------------------
                 if score >= 60:
 
-                    correlations.append({
-                        "serial_number": device.serial_number,
+                    correlation = {
+                        "device": device,
                         "drive_letter": mount.drive_letter,
-                        "product": device.product,
-                        "confidence": score
-                    })
+                        "score": score,
+                        "reasons": reasons
+                    }
 
+                    correlations.append(correlation)
+
+                    # Add forensic timeline entry
                     self.add_timeline(
                         "CORRELATION",
                         f"{device.serial_number} → {mount.drive_letter} ({score}%)"
                     )
 
         return correlations
-
     # -------------------------
     # MAIN PIPELINE
     # -------------------------

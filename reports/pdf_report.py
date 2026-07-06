@@ -1,6 +1,6 @@
-from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
 from reportlab.lib.styles import getSampleStyleSheet
-from reportlab.lib.pagesizes import A4
+from reportlab.lib import colors
 from pathlib import Path
 
 
@@ -11,69 +11,98 @@ class PDFReport:
     @staticmethod
     def generate(case, devices, mounted, correlations, timeline):
 
-        doc = SimpleDocTemplate(str(PDFReport.OUTPUT_FILE), pagesize=A4)
+        doc = SimpleDocTemplate(str(PDFReport.OUTPUT_FILE))
         styles = getSampleStyleSheet()
-        content = []
+        elements = []
 
         # -------------------------
         # CASE INFO
         # -------------------------
-        content.append(Paragraph("FORENSIC CASE REPORT", styles["Title"]))
-        content.append(Spacer(1, 12))
+        elements.append(Paragraph("USB FORENSICS CASE REPORT", styles["Title"]))
+        elements.append(Spacer(1, 12))
 
-        if case:
-            content.append(Paragraph(f"Case ID: {case[0]}", styles["Normal"]))
-            content.append(Paragraph(f"Case Name: {case[1]}", styles["Normal"]))
-            content.append(Paragraph(f"Created At: {case[2]}", styles["Normal"]))
-            content.append(Paragraph(f"Investigator: {case[3]}", styles["Normal"]))
+        elements.append(Paragraph(f"Case ID: {case[0]}", styles["Normal"]))
+        elements.append(Paragraph(f"Case Name: {case[1]}", styles["Normal"]))
+        elements.append(Paragraph(f"Created: {case[2]}", styles["Normal"]))
+        elements.append(Paragraph(f"Investigator: {case[3]}", styles["Normal"]))
 
-        content.append(Spacer(1, 12))
+        elements.append(Spacer(1, 20))
 
         # -------------------------
-        # DEVICES
+        # USB DEVICES
         # -------------------------
-        content.append(Paragraph("USB DEVICES", styles["Heading2"]))
+        elements.append(Paragraph("USB DEVICES", styles["Heading2"]))
 
         for d in devices:
-            text = f"{d.manufacturer} | {d.product} | {d.serial_number}"
-            content.append(Paragraph(text, styles["Normal"]))
 
-        content.append(Spacer(1, 12))
+            elements.append(Paragraph(
+                f"{d.manufacturer} | {d.product} | {d.serial_number}",
+                styles["Normal"]
+            ))
+
+        elements.append(Spacer(1, 15))
 
         # -------------------------
-        # MOUNTED
+        # MOUNTED DEVICES
         # -------------------------
-        content.append(Paragraph("MOUNTED DEVICES", styles["Heading2"]))
+        elements.append(Paragraph("MOUNTED DEVICES", styles["Heading2"]))
 
         for m in mounted:
-            text = f"{m.drive_letter} | {m.registry_name}"
-            content.append(Paragraph(text, styles["Normal"]))
 
-        content.append(Spacer(1, 12))
+            elements.append(Paragraph(
+                f"{m.drive_letter} | {m.registry_name}",
+                styles["Normal"]
+            ))
+
+        elements.append(Spacer(1, 15))
+
+        # -------------------------
+        # EVENT / TIMELINE
+        # -------------------------
+        elements.append(Paragraph("FORENSIC TIMELINE", styles["Heading2"]))
+
+        for t in timeline:
+
+            elements.append(Paragraph(
+                f"{t['time']} | {t['artifact']} | {t['description']}",
+                styles["Normal"]
+            ))
+
+        elements.append(Spacer(1, 15))
 
         # -------------------------
         # CORRELATIONS
         # -------------------------
-        content.append(Paragraph("CORRELATIONS", styles["Heading2"]))
+        elements.append(Paragraph("CORRELATION FINDINGS", styles["Heading2"]))
 
         for c in correlations:
-            text = f"{c['serial_number']} → {c['drive_letter']} ({c['confidence']}%)"
-            content.append(Paragraph(text, styles["Normal"]))
 
-        content.append(Spacer(1, 12))
+            elements.append(Paragraph(
+                f"Device: {c['device'].product}",
+                styles["Normal"]
+            ))
+
+            elements.append(Paragraph(
+                f"Drive: {c['drive_letter']} | Score: {c['score']}%",
+                styles["Normal"]
+            ))
+
+            for r in c["reasons"]:
+                elements.append(Paragraph(f"- {r}", styles["Normal"]))
+
+            elements.append(Spacer(1, 10))
 
         # -------------------------
-        # TIMELINE
+        # CONCLUSION
         # -------------------------
-        content.append(Paragraph("TIMELINE", styles["Heading2"]))
+        elements.append(Paragraph("CONCLUSION", styles["Heading2"]))
 
-        for t in timeline:
-            text = f"{t[0]} | {t[1]} | {t[2]}"
-            content.append(Paragraph(text, styles["Normal"]))
+        elements.append(Paragraph(
+            "This report summarizes USB device activity, "
+            "mounted drive mapping, event logs, and correlation analysis.",
+            styles["Normal"]
+        ))
 
-        # -------------------------
-        # BUILD PDF
-        # -------------------------
-        doc.build(content)
+        doc.build(elements)
 
         print(f"\n[+] PDF report generated: {PDFReport.OUTPUT_FILE}")
