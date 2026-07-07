@@ -329,33 +329,61 @@ class EvidenceManager:
     # ==================================================
 
     def correlate(
-            self,
-            devices,
-            mounted):
+        self,
+        devices,
+        mounted):
 
 
         correlations = []
 
 
-
         for device in devices:
-
 
             for mount in mounted:
 
 
-                score = 30
+                score = 0
+
+                reasons = []
 
 
-                reasons = [
+                # Base evidence:
+                # USB artifact exists
+                score += 20
 
-                    "USB device detected",
-
-                    "Mounted volume detected"
-
-                ]
+                reasons.append(
+                    "USB device artifact detected"
+                )
 
 
+                # Mounted evidence exists
+                score += 20
+
+                reasons.append(
+                    "Mounted volume artifact detected"
+                )
+
+
+
+                device_text = (
+
+                    str(device.manufacturer) +
+
+                    str(device.product)
+
+                ).lower()
+
+
+
+                mount_text = (
+
+                    str(mount.registry_name)
+
+                ).lower()
+
+
+
+                # Serial number correlation
 
                 if (
 
@@ -364,8 +392,7 @@ class EvidenceManager:
                     and
 
                     device.serial_number.lower()
-
-                    in mount.registry_name.lower()
+                    in mount_text
 
                 ):
 
@@ -375,47 +402,108 @@ class EvidenceManager:
 
                     reasons.append(
 
-                        "Serial number match"
+                        "Serial number match found"
 
                     )
 
 
 
-                correlations.append(
+                # Product correlation
 
-                    {
+                if (
 
-                        "manufacturer":
-                        device.manufacturer,
+                    device.product
 
+                    and
 
-                        "product":
-                        device.product,
+                    device.product.lower()
+                    in mount_text
 
-
-                        "serial_number":
-                        device.serial_number,
+                ):
 
 
-                        "drive_letter":
-                        mount.drive_letter,
+                    score += 10
 
 
-                        "confidence":
-                        score,
+                    reasons.append(
+
+                        "Product name match found"
+
+                    )
 
 
-                        "reasons":
-                        reasons
 
-                    }
+                # Manufacturer correlation
 
-                )
+                if (
 
+                    device.manufacturer
+
+                    and
+
+                    device.manufacturer.lower()
+                    in mount_text
+
+                ):
+
+
+                    score += 10
+
+
+                    reasons.append(
+
+                        "Manufacturer match found"
+
+                    )
+
+
+
+                # Maximum confidence = 100
+
+                if score > 100:
+
+                    score = 100
+
+
+
+                # Only report meaningful correlations
+
+                if score >= 40:
+
+
+                    correlations.append(
+
+                        {
+
+                            "manufacturer":
+                            device.manufacturer,
+
+
+                            "product":
+                            device.product,
+
+
+                            "serial_number":
+                            device.serial_number,
+
+
+                            "drive_letter":
+                            mount.drive_letter,
+
+
+                            "confidence":
+                            score,
+
+
+                            "reasons":
+                            reasons
+
+                        }
+
+                    )
 
 
         return correlations
-
 
 
 

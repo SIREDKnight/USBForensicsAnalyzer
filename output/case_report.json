@@ -74,10 +74,10 @@
             "product": "6&1526ad36&0&_&0",
             "serial_number": "6&1526ad36&0&_&0",
             "drive_letter": "C:",
-            "confidence": 30,
+            "confidence": 40,
             "reasons": [
-                "USB device detected",
-                "Mounted volume detected"
+                "USB device artifact detected",
+                "Mounted volume artifact detected"
             ]
         },
         {
@@ -85,10 +85,10 @@
             "product": "6&1526ad36&0&_&0",
             "serial_number": "6&1526ad36&0&_&0",
             "drive_letter": "D:",
-            "confidence": 30,
+            "confidence": 40,
             "reasons": [
-                "USB device detected",
-                "Mounted volume detected"
+                "USB device artifact detected",
+                "Mounted volume artifact detected"
             ]
         },
         {
@@ -96,10 +96,10 @@
             "product": "6&1526ad36&0&_&0",
             "serial_number": "6&1526ad36&0&_&0",
             "drive_letter": "E:",
-            "confidence": 30,
+            "confidence": 40,
             "reasons": [
-                "USB device detected",
-                "Mounted volume detected"
+                "USB device artifact detected",
+                "Mounted volume artifact detected"
             ]
         }
     ]
