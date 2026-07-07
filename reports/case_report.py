@@ -72,11 +72,19 @@ class CaseReport:
         for c in correlations:
 
             report["correlations"].append({
-                "device": c["device"].product,
-                "serial_number": c["device"].serial_number,
+
+                "manufacturer": c["manufacturer"],
+
+                "product": c["product"],
+
+                "serial_number": c["serial_number"],
+
                 "drive_letter": c["drive_letter"],
-                "score": c["score"],
+
+                "confidence": c["confidence"],
+
                 "reasons": c["reasons"]
+
             })
 
         # -------------------------

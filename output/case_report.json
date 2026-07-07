@@ -20,6 +20,53 @@
             "registry_name": "\\DosDevices\\E:"
         }
     ],
-    "timeline": [],
-    "correlations": []
+    "timeline": [
+        {
+            "event_time": "2026-07-01 14:15:56",
+            "artifact": "EVENT_LOG",
+            "description": "USB device installation or connection detected"
+        },
+        {
+            "event_time": "2026-07-01 14:28:44",
+            "artifact": "EVENT_LOG",
+            "description": "Plug and Play device event"
+        },
+        {
+            "event_time": "2026-07-01 14:28:44",
+            "artifact": "EVENT_LOG",
+            "description": "USB device installation or connection detected"
+        },
+        {
+            "event_time": "2026-07-02 16:49:58",
+            "artifact": "EVENT_LOG",
+            "description": "USB driver activity detected"
+        },
+        {
+            "event_time": "2026-07-02 16:49:58",
+            "artifact": "EVENT_LOG",
+            "description": "USB driver activity detected"
+        },
+        {
+            "event_time": "2026-07-02 16:49:58",
+            "artifact": "EVENT_LOG",
+            "description": "USB driver activity detected"
+        },
+        {
+            "event_time": "2026-07-02 16:49:59",
+            "artifact": "EVENT_LOG",
+            "description": "USB device installation or connection detected"
+        }
+    ],
+    "correlations": [
+        {
+            "manufacturer": "General",
+            "product": "UDisk",
+            "serial_number": "6&1526ad36&0&_&0",
+            "drive_letter": "E:",
+            "confidence": 30,
+            "reasons": [
+                "USB device and mounted volume exist during acquisition"
+            ]
+        }
+    ]
 }
