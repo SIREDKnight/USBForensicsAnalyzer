@@ -6,6 +6,9 @@ from database.database import EvidenceDatabase
 
 from reports.json_report import JSONReport
 from reports.case_report import CaseReport
+from reports.pdf_report import PDFReport
+
+from utils.hash_utils import HashUtils
 
 
 
@@ -26,30 +29,47 @@ class EvidenceManager:
 
 
 
+    # ==================================================
+    # CASE MANAGEMENT
+    # ==================================================
+
     def start_case(self):
 
         case = self.database.get_latest_case()
+
 
         if case:
 
             return case[0]
 
 
+
         return self.database.create_case(
+
             "USB Investigation Case 001",
+
             "Analyst"
+
         )
 
 
 
+    # ==================================================
+    # FULL ACQUISITION
+    # ==================================================
+
     def collect(self):
 
 
+        print("\n[+] Starting forensic acquisition...\n")
+
+
+
+        # Collect artifacts
+
         devices = self.registry.collect()
 
-
         mounted = self.mounted.collect()
-
 
         events = self.events.collect()
 
@@ -63,54 +83,94 @@ class EvidenceManager:
 
 
 
-        # Save USB devices
+        # ==============================================
+        # SAVE USB DEVICES
+        # ==============================================
+
 
         for device in devices:
 
+
+            record_hash = HashUtils.sha256(
+
+                device.to_dict()
+
+            )
+
+
             self.database.insert_device(
+
                 device,
-                self.case_id
+
+                self.case_id,
+
+                record_hash
+
             )
 
 
 
-        # Save mounted devices
+        # ==============================================
+        # SAVE MOUNTED DEVICES
+        # ==============================================
+
 
         for mount in mounted:
 
+
+            record_hash = HashUtils.sha256(
+
+                mount.to_dict()
+
+            )
+
+
             self.database.insert_mounted_device(
+
                 mount,
-                self.case_id
+
+                self.case_id,
+
+                record_hash
+
             )
 
 
 
-        # Save events
+        # ==============================================
+        # SAVE EVENT LOGS
+        # ==============================================
+
 
         for event in events:
 
+
+            record_hash = HashUtils.sha256(
+
+                event
+
+            )
+
+
             self.database.insert_event_log(
-                event["event_id"],
-                event["source"],
-                event["time"],
-                event["description"]
+
+                event,
+
+                record_hash
+
             )
 
 
 
-        # Correlation
+        # ==============================================
+        # BUILD TIMELINE
+        # ==============================================
 
-        correlations = self.correlate(
-            devices,
-            mounted
-        )
-
-
-
-        # Timeline
 
         timeline = self.build_timeline(
+
             events
+
         )
 
 
@@ -123,51 +183,140 @@ class EvidenceManager:
 
 
 
-        JSONReport.save(
-            devices
+        for item in timeline:
+
+
+            self.database.insert_timeline_event(
+
+                item["time"],
+
+                item["artifact"],
+
+                item["description"]
+
+            )
+
+
+
+        # ==============================================
+        # CORRELATION
+        # ==============================================
+
+
+        correlations = self.correlate(
+
+            devices,
+
+            mounted
+
         )
 
 
+
+        # ==============================================
+        # REPORT GENERATION
+        # ==============================================
+
+
+        JSONReport.save(
+
+            devices
+
+        )
+
+
+        case = self.database.get_latest_case()
+
+
+
         CaseReport.generate(
-            self.database.get_latest_case(),
+
+            case,
+
             devices,
+
             mounted,
+
             correlations,
+
             timeline
+
+        )
+
+
+
+        PDFReport.generate(
+
+            case,
+
+            devices,
+
+            mounted,
+
+            correlations,
+
+            timeline
+
         )
 
 
 
         return (
+
             devices,
+
             mounted,
+
             correlations,
+
             timeline
+
         )
 
 
 
+
+    # ==================================================
+    # TIMELINE BUILDER
+    # ==================================================
+
     def build_timeline(self, events):
+
 
         timeline = []
 
 
+
         for event in events:
 
-            timeline.append({
 
-                "time": event["time"],
+            timeline.append(
 
-                "artifact": "EVENT_LOG",
+                {
 
-                "description": event["description"]
+                    "time":
+                    event["time"],
 
-            })
+
+                    "artifact":
+                    "EVENT_LOG",
+
+
+                    "description":
+                    event["description"]
+
+                }
+
+            )
+
 
 
         timeline.sort(
-            key=lambda x:x["time"]
+
+            key=lambda x: x["time"]
+
         )
+
 
 
         return timeline
@@ -175,115 +324,145 @@ class EvidenceManager:
 
 
 
-    # ==================================
-    # UPDATED CORRELATION ENGINE
-    # ==================================
+    # ==================================================
+    # CORRELATION ENGINE
+    # ==================================================
 
-    def correlate(self, devices, mounted):
+    def correlate(
+            self,
+            devices,
+            mounted):
+
 
         correlations = []
 
 
+
         for device in devices:
+
 
             for mount in mounted:
 
 
-                score = 0
-
-                reasons = []
+                score = 30
 
 
-                device_text = (
-                    str(device.manufacturer) +
-                    str(device.product) +
-                    str(device.serial_number)
-                ).lower()
+                reasons = [
+
+                    "USB device detected",
+
+                    "Mounted volume detected"
+
+                ]
 
 
-
-                mount_text = (
-                    str(mount.drive_letter) +
-                    str(mount.registry_name)
-                ).lower()
-
-
-
-                # Serial match
 
                 if (
+
                     device.serial_number
+
                     and
-                    str(device.serial_number).lower()
-                    in mount_text
+
+                    device.serial_number.lower()
+
+                    in mount.registry_name.lower()
+
                 ):
 
-                    score += 70
+
+                    score += 50
+
 
                     reasons.append(
-                        "Serial number found in mounted artifact"
+
+                        "Serial number match"
+
                     )
 
 
 
-                # Product match
+                correlations.append(
 
-                if (
-                    device.product
-                    and
-                    str(device.product).lower()
-                    in mount_text
-                ):
-
-                    score += 20
-
-                    reasons.append(
-                        "Product name match"
-                    )
-
-
-
-                # Existing USB + Mounted evidence
-
-                if score == 0:
-
-                    score += 30
-
-                    reasons.append(
-                        "USB device and mounted volume "
-                        "exist during acquisition"
-                    )
-
-
-
-                if score >= 30:
-
-                    correlations.append({
+                    {
 
                         "manufacturer":
-                            device.manufacturer,
+                        device.manufacturer,
+
 
                         "product":
-                            device.product,
+                        device.product,
+
 
                         "serial_number":
-                            device.serial_number,
+                        device.serial_number,
+
 
                         "drive_letter":
-                            mount.drive_letter,
+                        mount.drive_letter,
+
 
                         "confidence":
-                            score,
+                        score,
+
 
                         "reasons":
-                            reasons
+                        reasons
 
-                    })
+                    }
+
+                )
+
 
 
         return correlations
 
 
+
+
+    # ==================================================
+    # DEVICE QUERY
+    # ==================================================
+
+    def query_device(self, serial):
+
+
+        device = self.database.get_device_by_serial(
+
+            serial
+
+        )
+
+
+        timeline = self.database.get_timeline()
+
+
+        return device, timeline
+
+
+
+
+    # ==================================================
+    # EXPORT CASE
+    # ==================================================
+
+    def export_case(self):
+
+
+        from reports.case_report import CaseExport
+
+
+        CaseExport.export(
+
+            self.case_id
+
+        )
+
+
+
+
+    # ==================================================
+    # CLOSE
+    # ==================================================
 
     def close(self):
 

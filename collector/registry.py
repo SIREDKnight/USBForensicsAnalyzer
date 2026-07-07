@@ -1,85 +1,134 @@
-import re
 import winreg
 
-from models.device import USBDevice
 from collector.base_collector import BaseCollector
+from models.device import USBDevice
 
 
 class USBRegistryCollector(BaseCollector):
 
     REGISTRY_PATH = r"SYSTEM\CurrentControlSet\Enum\USBSTOR"
 
+
     def collect(self):
 
         devices = []
 
+
         try:
 
-            root = winreg.OpenKey(
+            key = winreg.OpenKey(
                 winreg.HKEY_LOCAL_MACHINE,
                 self.REGISTRY_PATH
             )
 
-            model_count = winreg.QueryInfoKey(root)[0]
 
-            for i in range(model_count):
+            manufacturer_keys = self.get_subkeys(key)
 
-                model_name = winreg.EnumKey(root, i)
 
-                model_key = winreg.OpenKey(root, model_name)
+            for manufacturer in manufacturer_keys:
 
-                serial_count = winreg.QueryInfoKey(model_key)[0]
 
-                manufacturer = self.extract_vendor(model_name)
-                product = self.extract_product(model_name)
-                revision = self.extract_revision(model_name)
+                manufacturer_path = (
+                    self.REGISTRY_PATH +
+                    "\\" +
+                    manufacturer
+                )
 
-                for j in range(serial_count):
 
-                    serial = winreg.EnumKey(model_key, j)
+                try:
 
-                    registry_path = (
-                        self.REGISTRY_PATH
-                        + "\\"
-                        + model_name
-                        + "\\"
-                        + serial
+                    device_key = winreg.OpenKey(
+                        winreg.HKEY_LOCAL_MACHINE,
+                        manufacturer_path
                     )
 
-                    devices.append(
-                        USBDevice(
-                            manufacturer,
-                            product,
-                            revision,
-                            serial,
-                            registry_path
+
+                    device_entries = self.get_subkeys(device_key)
+
+
+                    for device_entry in device_entries:
+
+
+                        serial_path = (
+                            manufacturer_path +
+                            "\\" +
+                            device_entry
                         )
-                    )
 
-        except FileNotFoundError:
 
-            print("USBSTOR Registry key not found.")
+                        try:
+
+                            serial_key = winreg.OpenKey(
+                                winreg.HKEY_LOCAL_MACHINE,
+                                serial_path
+                            )
+
+
+                            device = USBDevice(
+
+                                manufacturer=manufacturer,
+
+                                product=device_entry,
+
+                                revision="Unknown",
+
+                                serial_number=device_entry,
+
+                                registry_path=serial_path
+
+                            )
+
+
+                            devices.append(device)
+
+
+                        except Exception:
+
+                            continue
+
+
+                except Exception:
+
+                    continue
+
+
+        except Exception as e:
+
+            print(
+                "[USB Registry Error]",
+                e
+            )
+
 
         return devices
 
-    def extract_vendor(self, text):
 
-        match = re.search(r"Ven_([^&]+)", text)
 
-        return match.group(1) if match else "Unknown"
+    def get_subkeys(self, key):
 
-    def extract_product(self, text):
+        result = []
 
-        match = re.search(r"Prod_([^&]+)", text)
 
-        if match:
+        index = 0
 
-            return match.group(1).replace("_", " ")
 
-        return "Unknown"
+        while True:
 
-    def extract_revision(self, text):
+            try:
 
-        match = re.search(r"Rev_([^&]+)", text)
+                name = winreg.EnumKey(
+                    key,
+                    index
+                )
 
-        return match.group(1) if match else "Unknown"
+                result.append(name)
+
+                index += 1
+
+
+            except OSError:
+
+                break
+
+
+        return result

@@ -1,71 +1,105 @@
 {
     "case": {
-        "id": 11,
+        "id": 1,
         "name": "USB Investigation Case 001",
-        "created_at": "2026-07-06 11:23:31",
+        "created_at": "2026-07-07 12:25:35",
         "investigator": "Analyst"
     },
     "usb_devices": [
         {
-            "manufacturer": "General",
-            "product": "UDisk",
-            "revision": "5.00",
+            "manufacturer": "Disk&Ven_General&Prod_UDisk&Rev_5.00",
+            "product": "6&1526ad36&0&_&0",
+            "revision": "Unknown",
             "serial_number": "6&1526ad36&0&_&0",
             "registry_path": "SYSTEM\\CurrentControlSet\\Enum\\USBSTOR\\Disk&Ven_General&Prod_UDisk&Rev_5.00\\6&1526ad36&0&_&0"
         }
     ],
     "mounted_devices": [
         {
+            "drive_letter": "C:",
+            "registry_name": "\\DosDevices\\C:",
+            "volume_guid": null
+        },
+        {
+            "drive_letter": "D:",
+            "registry_name": "\\DosDevices\\D:",
+            "volume_guid": null
+        },
+        {
             "drive_letter": "E:",
-            "registry_name": "\\DosDevices\\E:"
+            "registry_name": "\\DosDevices\\E:",
+            "volume_guid": null
         }
     ],
     "timeline": [
         {
-            "event_time": "2026-07-01 14:15:56",
+            "time": "2026-07-01 14:15:56",
             "artifact": "EVENT_LOG",
             "description": "USB device installation or connection detected"
         },
         {
-            "event_time": "2026-07-01 14:28:44",
+            "time": "2026-07-01 14:28:44",
             "artifact": "EVENT_LOG",
             "description": "Plug and Play device event"
         },
         {
-            "event_time": "2026-07-01 14:28:44",
+            "time": "2026-07-01 14:28:44",
             "artifact": "EVENT_LOG",
             "description": "USB device installation or connection detected"
         },
         {
-            "event_time": "2026-07-02 16:49:58",
+            "time": "2026-07-02 16:49:58",
             "artifact": "EVENT_LOG",
             "description": "USB driver activity detected"
         },
         {
-            "event_time": "2026-07-02 16:49:58",
+            "time": "2026-07-02 16:49:58",
             "artifact": "EVENT_LOG",
             "description": "USB driver activity detected"
         },
         {
-            "event_time": "2026-07-02 16:49:58",
+            "time": "2026-07-02 16:49:58",
             "artifact": "EVENT_LOG",
             "description": "USB driver activity detected"
         },
         {
-            "event_time": "2026-07-02 16:49:59",
+            "time": "2026-07-02 16:49:59",
             "artifact": "EVENT_LOG",
             "description": "USB device installation or connection detected"
         }
     ],
     "correlations": [
         {
-            "manufacturer": "General",
-            "product": "UDisk",
+            "manufacturer": "Disk&Ven_General&Prod_UDisk&Rev_5.00",
+            "product": "6&1526ad36&0&_&0",
+            "serial_number": "6&1526ad36&0&_&0",
+            "drive_letter": "C:",
+            "confidence": 30,
+            "reasons": [
+                "USB device detected",
+                "Mounted volume detected"
+            ]
+        },
+        {
+            "manufacturer": "Disk&Ven_General&Prod_UDisk&Rev_5.00",
+            "product": "6&1526ad36&0&_&0",
+            "serial_number": "6&1526ad36&0&_&0",
+            "drive_letter": "D:",
+            "confidence": 30,
+            "reasons": [
+                "USB device detected",
+                "Mounted volume detected"
+            ]
+        },
+        {
+            "manufacturer": "Disk&Ven_General&Prod_UDisk&Rev_5.00",
+            "product": "6&1526ad36&0&_&0",
             "serial_number": "6&1526ad36&0&_&0",
             "drive_letter": "E:",
             "confidence": 30,
             "reasons": [
-                "USB device and mounted volume exist during acquisition"
+                "USB device detected",
+                "Mounted volume detected"
             ]
         }
     ]

@@ -1,90 +1,123 @@
 import win32evtlog
+
 from collector.base_collector import BaseCollector
 
 
 class EventLogCollector(BaseCollector):
 
+    """
+    Collects USB related Windows Event Logs.
+
+    Primary source:
+    Windows System Event Log
+
+    Important USB-related sources:
+    - Microsoft-Windows-UserPnp
+    - Microsoft-Windows-Kernel-PnP
+    - Microsoft-Windows-DriverFrameworks-UserMode
+    """
+
+
     LOG_TYPE = "System"
 
 
-    USB_KEYWORDS = [
-        "USB",
-        "Kernel-PnP",
-        "DriverFrameworks",
-        "UserPnp"
+    USB_SOURCES = [
+
+        "Microsoft-Windows-UserPnp",
+
+        "Microsoft-Windows-Kernel-PnP",
+
+        "Microsoft-Windows-DriverFrameworks-UserMode"
+
     ]
+
 
 
     def collect(self):
 
         events = []
 
-        server = "localhost"
-
 
         try:
 
-            hand = win32evtlog.OpenEventLog(
-                server,
+            handle = win32evtlog.OpenEventLog(
+                "localhost",
                 self.LOG_TYPE
             )
 
 
             flags = (
+
                 win32evtlog.EVENTLOG_BACKWARDS_READ |
+
                 win32evtlog.EVENTLOG_SEQUENTIAL_READ
+
             )
 
 
             while True:
 
+
                 records = win32evtlog.ReadEventLog(
-                    hand,
+                    handle,
                     flags,
                     0
                 )
 
 
                 if not records:
+
                     break
+
 
 
                 for event in records:
 
 
-                    source = str(event.SourceName)
-
-
-                    # Check if event relates to USB activity
-
-                    if not any(
-                        keyword.lower() in source.lower()
-                        for keyword in self.USB_KEYWORDS
-                    ):
-                        continue
-
-
-                    description = self.classify_event(
-                        source,
-                        event.EventID,
-                        event.StringInserts
+                    source = str(
+                        event.SourceName
                     )
 
 
-                    events.append({
+                    if not self.is_usb_event(source):
 
-                        "event_id": event.EventID,
+                        continue
 
-                        "source": source,
 
-                        "time": str(event.TimeGenerated),
 
-                        "description": description
+                    events.append(
 
-                    })
+                        {
+
+                            "event_id":
+                            event.EventID,
+
+
+                            "source":
+                            source,
+
+
+                            "time":
+                            str(
+                                event.TimeGenerated
+                            ),
+
+
+                            "description":
+                            self.classify_event(
+                                source,
+                                event.EventID,
+                                event.StringInserts
+                            )
+
+                        }
+
+                    )
+
 
 
         except Exception as e:
+
 
             print(
                 "[EventLogCollector Error]",
@@ -92,46 +125,73 @@ class EventLogCollector(BaseCollector):
             )
 
 
+
         return events
 
 
 
-    # -----------------------------
-    # EVENT CLASSIFICATION
-    # -----------------------------
+
+    def is_usb_event(self, source):
+
+        for usb_source in self.USB_SOURCES:
+
+            if usb_source.lower() in source.lower():
+
+                return True
+
+
+        return False
+
+
+
+
     def classify_event(
-        self,
-        source,
-        event_id,
-        data
-    ):
+            self,
+            source,
+            event_id,
+            data):
 
 
         source = source.lower()
 
 
+
         if "userpnp" in source:
 
+
             return (
+
                 "USB device installation "
                 "or connection detected"
+
             )
 
 
-        if "driverframeworks" in source:
+
+        elif "driverframeworks" in source:
+
 
             return (
+
                 "USB driver activity detected"
+
             )
 
 
-        if "kernel-pnp" in source:
+
+        elif "kernel-pnp" in source:
+
 
             return (
+
                 "Plug and Play device event"
+
             )
+
 
 
         return (
-            "USB related system event"
+
+            "USB related Windows event"
+
         )
