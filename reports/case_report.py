@@ -1,29 +1,36 @@
-import json
 from pathlib import Path
+import json
 
 
 class CaseReport:
 
-    OUTPUT_DIR = Path("output")
+    OUTPUT_FILE = Path("output") / "case_report.json"
 
     @staticmethod
     def generate(case, devices, mounted, correlations, timeline):
 
-        report = {
-            "case": {
-                "id": case[0] if case else None,
-                "name": case[1] if case else None,
-                "created_at": case[2] if case else None,
-                "investigator": case[3] if case else None,
-            },
-            "usb_devices": [],
-            "mounted_devices": [],
-            "correlations": correlations,
-            "timeline": []
-        }
+        report = {}
 
+        # -------------------------
+        # CASE INFO
+        # -------------------------
+        if case:
+            report["case"] = {
+                "id": case[0],
+                "name": case[1],
+                "created_at": case[2],
+                "investigator": case[3]
+            }
+        else:
+            report["case"] = None
+
+        # -------------------------
         # USB DEVICES
+        # -------------------------
+        report["usb_devices"] = []
+
         for d in devices:
+
             report["usb_devices"].append({
                 "manufacturer": d.manufacturer,
                 "product": d.product,
@@ -32,27 +39,50 @@ class CaseReport:
                 "registry_path": d.registry_path
             })
 
+        # -------------------------
         # MOUNTED DEVICES
+        # -------------------------
+        report["mounted_devices"] = []
+
         for m in mounted:
+
             report["mounted_devices"].append({
                 "drive_letter": m.drive_letter,
                 "registry_name": m.registry_name
             })
 
-        # TIMELINE
+        # -------------------------
+        # TIMELINE (FIXED - DICT FORMAT)
+        # -------------------------
+        report["timeline"] = []
+
         for t in timeline:
+
             report["timeline"].append({
-                "event_time": t[0],
-                "artifact": t[1],
-                "description": t[2]
+                "event_time": t.get("time", "UNKNOWN"),
+                "artifact": t.get("artifact", "UNKNOWN"),
+                "description": t.get("description", "UNKNOWN")
             })
 
-        # CREATE OUTPUT FOLDER (FIX)
-        CaseReport.OUTPUT_DIR.mkdir(exist_ok=True)
+        # -------------------------
+        # CORRELATIONS
+        # -------------------------
+        report["correlations"] = []
 
-        output_file = CaseReport.OUTPUT_DIR / "case_report.json"
+        for c in correlations:
 
-        with open(output_file, "w", encoding="utf-8") as f:
+            report["correlations"].append({
+                "device": c["device"].product,
+                "serial_number": c["device"].serial_number,
+                "drive_letter": c["drive_letter"],
+                "score": c["score"],
+                "reasons": c["reasons"]
+            })
+
+        # -------------------------
+        # SAVE FILE
+        # -------------------------
+        with open(CaseReport.OUTPUT_FILE, "w", encoding="utf-8") as f:
             json.dump(report, f, indent=4)
 
-        print(f"\n[+] Forensic case report generated: {output_file}")
+        print(f"\n[+] Case report generated: {CaseReport.OUTPUT_FILE}")

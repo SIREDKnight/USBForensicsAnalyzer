@@ -73,7 +73,7 @@ class EvidenceDatabase:
     # -------------------------
     # INSERTS
     # -------------------------
-    def insert_device(self, device, case_id, record_hash):
+    def insert_device(self, device, case_id, record_hash = None):
 
         self.cursor.execute("""
         INSERT OR IGNORE INTO usb_devices (
@@ -93,7 +93,7 @@ class EvidenceDatabase:
 
         self.connection.commit()
 
-    def insert_mounted_device(self, mounted, case_id, record_hash):
+    def insert_mounted_device(self, mounted, case_id, record_hash = None):
 
         self.cursor.execute("""
         INSERT INTO mounted_devices (
@@ -109,7 +109,7 @@ class EvidenceDatabase:
 
         self.connection.commit()
 
-    def insert_timeline_event(self, event_time, artifact, description, record_hash):
+    def insert_timeline_event(self, event_time, artifact, description, record_hash = None):
 
         self.cursor.execute("""
         INSERT INTO timeline (

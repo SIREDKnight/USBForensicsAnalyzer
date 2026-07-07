@@ -1,301 +1,81 @@
-from datetime import datetime
+from asyncio import events
 
 from collector.registry import USBRegistryCollector
 from collector.mounteddevices import MountedDevicesCollector
-from database.database import EvidenceDatabase
-from reports.case_report import CaseReport
-from reports.pdf_report import PDFReport
-from utils.hash_utils import HashUtils
-from reports.case_export import CaseExport
 from collector.event_logs import EventLogCollector
-from datetime import datetime
+
+from database.database import EvidenceDatabase
+from reports.json_report import JSONReport
+from reports.case_report import CaseReport
+
 
 class EvidenceManager:
 
     def __init__(self):
 
         self.registry = USBRegistryCollector()
-        self.mounted_collector = MountedDevicesCollector()
+        self.mounted = MountedDevicesCollector()
+        self.events = EventLogCollector()
+
         self.database = EvidenceDatabase()
-        self.case_id = self.database.create_case(
-            "USB Investigation Case 001",
+
+        self.case_id = self.start_case()
+
+    # -------------------------
+    # CASE
+    # -------------------------
+    def start_case(self):
+
+        case = self.database.get_latest_case()
+
+        if case:
+            return case[0]
+
+        return self.database.create_case(
+            "USB Investigation Case",
             "Analyst"
         )
-        self.event_collector = EventLogCollector()
 
-    # -------------------------
-    # TIMELINE
-    # -------------------------
-    def add_timeline(self, artifact, description):
-
-        event_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-
-        record_hash = HashUtils.sha256({
-            "time": event_time,
-            "artifact": artifact,
-            "description": description
-        })
-
-        self.database.insert_timeline_event(
-            event_time,
-            artifact,
-            description,
-            record_hash
-        )
-
-    def build_timeline(self, devices, mounted, events):
-
-        timeline = []
-
-        # -------------------------
-        # EVENT LOGS (REAL TIMESTAMPS)
-        # -------------------------
-        for e in events:
-
-            dt = self.normalize_time(e["time"])
-
-            if dt:
-
-                timeline.append({
-                    "time": dt,
-                    "artifact": "EVENT_LOG",
-                    "description": f"Event {e['event_id']} - {e['source']}"
-                })
-
-    # -------------------------
-    # USB DEVICES (NO REAL TIME YET)
-    # -------------------------
-        for d in devices:
-
-            timeline.append({
-                "time": None,
-                "artifact": "USB_DEVICE",
-                "description": f"{d.product} ({d.serial_number}) detected"
-            })
-
-    # -------------------------
-    # MOUNTED DEVICES (NO REAL TIME YET)
-    # -------------------------
-        for m in mounted:
-
-            timeline.append({
-                "time": None,
-                "artifact": "MOUNT",
-                "description": f"{m.drive_letter} mounted"
-            })
-
-    # -------------------------
-    # SORT WITH REAL TIMESTAMPS FIRST
-    # -------------------------
-        timeline_sorted = sorted(
-            timeline,
-            key=lambda x: x["time"] if x["time"] else datetime.min
-        )
-
-    # -------------------------
-    # FORMAT BACK TO STRING
-    # -------------------------
-        final_timeline = []
-
-        for t in timeline_sorted:
-
-            final_timeline.append({
-                "time": t["time"].strftime("%Y-%m-%d %H:%M:%S") if t["time"] else "UNKNOWN",
-                "artifact": t["artifact"],
-                "description": t["description"]
-            })
-
-        return final_timeline
-
-    def normalize_time(self, raw_time):
-
-        if raw_time in [None, "", "UNKNOWN"]:
-            return None
-
-        try:
-            # Event logs already come as datetime-like strings
-            dt = datetime.strptime(str(raw_time)[:19], "%Y-%m-%d %H:%M:%S")
-            return dt
-        except:
-            return None
-
-    # -------------------------
-    # 1. EVENT LOGS
-    # -------------------------
-        for e in events:
-
-            timeline.append({
-                "time": e["time"],
-                "artifact": "EVENT_LOG",
-                "description": f"Event {e['event_id']} - {e['source']}"
-            })
-
-        # -------------------------
-        # 2. USB DEVICES
-        # -------------------------
-        for d in devices:
-
-            timeline.append({
-                "time": "UNKNOWN",
-                "artifact": "USB_DEVICE",
-                "description": f"{d.product} ({d.serial_number}) detected"
-            })
-
-        # -------------------------
-        # 3. MOUNTED DEVICES
-        # -------------------------
-        for m in mounted:
-
-            timeline.append({
-                "time": "UNKNOWN",
-                "artifact": "MOUNT",
-                "description": f"{m.drive_letter} mounted"
-            })
-
-        # -------------------------
-        # SORT TIMELINE
-        # -------------------------
-        timeline_sorted = sorted(
-            timeline,
-            key=lambda x: x["time"] if x["time"] != "UNKNOWN" else ""
-        )
-
-        return timeline_sorted
-
-    # -------------------------
-    # CORRELATION
-    # -------------------------
-    def correlate(self, devices, mounted):
-
-        correlations = []
-
-        for device in devices:
-
-            for mount in mounted:
-
-                score = 0
-                reasons = []
-
-                # -------------------------
-                # 1. SERIAL MATCH
-                # -------------------------
-                if device.serial_number in mount.registry_name:
-
-                    score += 60
-                    reasons.append("Serial number match (+60)")
-
-                # -------------------------
-                # 2. PRODUCT MATCH
-                # -------------------------
-                if device.product.lower() in mount.registry_name.lower():
-
-                    score += 20
-                    reasons.append("Product name match (+20)")
-
-                # -------------------------
-                # 3. USB KEYWORD BONUS
-                # -------------------------
-                if "USB" in mount.registry_name.upper():
-
-                    score += 10
-                    reasons.append("USB registry evidence (+10)")
-
-                # -------------------------
-                # FINAL DECISION
-                # -------------------------
-                if score >= 60:
-
-                    correlation = {
-                        "device": device,
-                        "drive_letter": mount.drive_letter,
-                        "score": score,
-                        "reasons": reasons
-                    }
-
-                    correlations.append(correlation)
-
-                    # Add forensic timeline entry
-                    self.add_timeline(
-                        "CORRELATION",
-                        f"{device.serial_number} → {mount.drive_letter} ({score}%)"
-                    )
-
-        return correlations
     # -------------------------
     # MAIN PIPELINE
     # -------------------------
     def collect(self):
 
         devices = self.registry.collect()
-
-        for device in devices:
-
-            record_hash = HashUtils.sha256(device.__dict__)
-
-            self.database.insert_device(device, self.case_id, record_hash)
-
-            self.add_timeline(
-                "USB_DEVICE",
-                f"Detected {device.product}"
-            )
-
-        mounted = self.mounted_collector.collect()
-
-        for item in mounted:
-
-            record_hash = HashUtils.sha256(item.__dict__)
-
-            self.database.insert_mounted_device(item, self.case_id, record_hash)
-
-            self.add_timeline(
-                "MOUNTED_DEVICE",
-                f"Detected {item.drive_letter}"
-            )
-
-        event_logs = self.event_collector.collect()
-
-        for event in event_logs:
-
-            self.database.insert_event_log(
-                event["event_id"],
-                event["source"],
-                event["time"],
-                event["description"]
-            )
-
-            self.add_timeline(
-                "EVENT_LOG",
-                f"Event {event['event_id']} detected"
-            )
-
-        correlations = self.correlate(devices, mounted)
-        
-        events = self.event_collector.collect()
-
-        for event in events:
-            self.database.insert_event_log(
-                event["event_id"],
-                event["source"],
-                event["time"],
-                event["description"]
-            )
-
-        devices = self.registry.collect()
-        mounted = self.mounted_collector.collect()
+        mounted = self.mounted.collect()
+        events = self.events.collect()
 
         correlations = self.correlate(devices, mounted)
 
-        timeline = self.build_timeline(devices, mounted, events)
+        timeline = self.build_timeline(events)
+
+        print("\n===== DEBUG =====")
+        print("Events collected:")
+        print(events)
+
+        print("\nTimeline built:")
+        print(timeline)
+        print("=================\n")
+
+        # DATABASE STORAGE
+        for d in devices:
+            self.database.insert_device(d, self.case_id)
+
+        for m in mounted:
+            self.database.insert_mounted_device(m, self.case_id)
+
+        for e in events:
+            self.database.insert_event_log(
+                e["event_id"],
+                e["source"],
+                e["time"],
+                e["description"]
+            )
+
+        # REPORTS
+        JSONReport.save(devices)
 
         CaseReport.generate(
-            self.database.get_latest_case(),
-            devices,
-            mounted,
-            correlations,
-            timeline
-        )
-
-        PDFReport.generate(
             self.database.get_latest_case(),
             devices,
             mounted,
@@ -306,23 +86,55 @@ class EvidenceManager:
         return devices, mounted, correlations, timeline
 
     # -------------------------
-    # QUERY
+    # TIMELINE (REAL ONLY)
     # -------------------------
-    def query_device(self, serial):
+    def build_timeline(self, events):
 
-        device = self.database.get_device_by_serial(serial)
-        timeline = self.database.get_timeline()
+        timeline = []
 
-        return device, timeline
-    
-    def export_case(self):
+        for e in events:
 
-        case = self.database.get_latest_case()
+            timeline.append({
+                "time": e["time"],
+                "artifact": "EVENT_LOG",
+                "description": e["description"]
+            })
 
-        if case:
-            CaseExport.export(case[0])
-        else:
-            print("No case found")
+        timeline.sort(key=lambda x: x["time"])
+
+        return timeline
+
+    # -------------------------
+    # CORRELATION (NO TIME)
+    # -------------------------
+    def correlate(self, devices, mounted):
+
+        results = []
+
+        for d in devices:
+            for m in mounted:
+
+                score = 0
+                reasons = []
+
+                if d.serial_number in m.registry_name:
+                    score += 60
+                    reasons.append("Serial match")
+
+                if d.product.lower() in m.registry_name.lower():
+                    score += 20
+                    reasons.append("Product match")
+
+                if score >= 60:
+
+                    results.append({
+                        "device": d,
+                        "drive_letter": m.drive_letter,
+                        "score": score,
+                        "reasons": reasons
+                    })
+
+        return results
 
     # -------------------------
     # CLOSE
