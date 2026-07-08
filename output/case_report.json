@@ -1,8 +1,8 @@
 {
     "case": {
-        "id": 2,
-        "name": "test run 2",
-        "created_at": "2026-07-08 08:59:19",
+        "id": 3,
+        "name": "gui test run",
+        "created_at": "2026-07-08 09:29:24",
         "investigator": "Joe"
     },
     "usb_devices": [

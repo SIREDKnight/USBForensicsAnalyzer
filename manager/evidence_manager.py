@@ -10,9 +10,6 @@ from reports.pdf_report import PDFReport
 
 from utils.hash_utils import HashUtils
 
-import getpass
-from datetime import datetime
-
 
 
 class EvidenceManager:
@@ -28,65 +25,27 @@ class EvidenceManager:
 
         self.database = EvidenceDatabase()
 
-        self.case_id = self.start_case()
+        # GUI creates the case
+        self.case_id = None
 
 
 
     # ==================================================
-    # CREATE NEW FORENSIC CASE
+    # CASE CREATION FROM GUI
     # ==================================================
 
-    def start_case(self):
+    def create_case(
+
+            self,
+
+            case_name,
+
+            investigator,
+
+            generated_case_id):
 
 
-        print("\n" + "=" * 70)
-
-        print("CREATE NEW FORENSIC CASE")
-
-        print("=" * 70)
-
-
-
-        case_name = input(
-
-            "Enter Case Name: "
-
-        ).strip()
-
-
-
-        if not case_name:
-
-
-            case_name = (
-
-                "USB Forensic Investigation"
-
-            )
-
-
-
-        investigator = getpass.getuser()
-
-
-
-        timestamp = datetime.now().strftime(
-
-            "%Y%m%d-%H%M%S"
-
-        )
-
-
-
-        generated_case_id = (
-
-            f"CASE-{timestamp}"
-
-        )
-
-
-
-        database_id = self.database.create_case(
+        self.case_id = self.database.create_case(
 
             generated_case_id,
 
@@ -97,32 +56,7 @@ class EvidenceManager:
         )
 
 
-
-        print("\n[+] Case Created")
-
-        print(
-
-            f"Case ID      : {generated_case_id}"
-
-        )
-
-        print(
-
-            f"Case Name    : {case_name}"
-
-        )
-
-        print(
-
-            f"Investigator : {investigator}"
-
-        )
-
-        print("=" * 70)
-
-
-
-        return database_id
+        return self.case_id
 
 
 
@@ -131,6 +65,16 @@ class EvidenceManager:
     # ==================================================
 
     def collect(self):
+
+
+        if self.case_id is None:
+
+            raise Exception(
+
+                "No active case. Create a case first."
+
+            )
+
 
 
         print("\n[+] Starting forensic acquisition...\n")
@@ -172,17 +116,20 @@ class EvidenceManager:
         for device in devices:
 
 
+            record_hash = HashUtils.sha256(
+
+                device.__dict__
+
+            )
+
+
             self.database.insert_device(
 
                 device,
 
                 self.case_id,
 
-                HashUtils.sha256(
-
-                    device.__dict__
-
-                )
+                record_hash
 
             )
 
@@ -195,17 +142,20 @@ class EvidenceManager:
         for mount in mounted:
 
 
+            record_hash = HashUtils.sha256(
+
+                mount.__dict__
+
+            )
+
+
             self.database.insert_mounted_device(
 
                 mount,
 
                 self.case_id,
 
-                HashUtils.sha256(
-
-                    mount.__dict__
-
-                )
+                record_hash
 
             )
 
@@ -218,6 +168,13 @@ class EvidenceManager:
         for event in events:
 
 
+            record_hash = HashUtils.sha256(
+
+                event
+
+            )
+
+
             self.database.insert_event_log(
 
                 event["event_id"],
@@ -228,11 +185,7 @@ class EvidenceManager:
 
                 event["description"],
 
-                HashUtils.sha256(
-
-                    event
-
-                )
+                record_hash
 
             )
 
@@ -249,6 +202,7 @@ class EvidenceManager:
         )
 
 
+
         for item in timeline:
 
 
@@ -260,11 +214,7 @@ class EvidenceManager:
 
                 item["description"],
 
-                HashUtils.sha256(
-
-                    item
-
-                )
+                HashUtils.sha256(item)
 
             )
 
@@ -288,15 +238,14 @@ class EvidenceManager:
         # REPORTS
         # ==============================================
 
-        case = self.database.get_latest_case()
-
-
-
         JSONReport.save(
 
             devices
 
         )
+
+
+        case = self.database.get_latest_case()
 
 
 
@@ -329,40 +278,6 @@ class EvidenceManager:
             timeline
 
         )
-
-
-
-        print("\n" + "=" * 70)
-
-        print("ACQUISITION COMPLETE")
-
-        print("=" * 70)
-
-        print(
-
-            f"Devices       : {len(devices)}"
-
-        )
-
-        print(
-
-            f"Mounted       : {len(mounted)}"
-
-        )
-
-        print(
-
-            f"Timeline      : {len(timeline)}"
-
-        )
-
-        print(
-
-            f"Correlations  : {len(correlations)}"
-
-        )
-
-        print("=" * 70)
 
 
 
@@ -421,7 +336,6 @@ class EvidenceManager:
         )
 
 
-
         return timeline
 
 
@@ -454,22 +368,15 @@ class EvidenceManager:
 
                 reasons = [
 
-
                     "USB device artifact detected",
 
-
                     "Mounted volume artifact detected"
-
 
                 ]
 
 
 
-                registry_text = (
-
-                    mount.registry_name.lower()
-
-                )
+                registry = mount.registry_name.lower()
 
 
 
@@ -481,7 +388,7 @@ class EvidenceManager:
 
                     device.serial_number.lower()
 
-                    in registry_text
+                    in registry
 
                 ):
 
@@ -505,7 +412,7 @@ class EvidenceManager:
 
                     device.product.lower()
 
-                    in registry_text
+                    in registry
 
                 ):
 
@@ -528,7 +435,6 @@ class EvidenceManager:
 
 
                 correlations.append({
-
 
                     "manufacturer":
 
@@ -562,13 +468,12 @@ class EvidenceManager:
                 })
 
 
-
         return correlations
 
 
 
     # ==================================================
-    # DEVICE QUERY
+    # QUERY
     # ==================================================
 
     def query_device(self, serial):
