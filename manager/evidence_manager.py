@@ -25,29 +25,28 @@ class EvidenceManager:
 
         self.database = EvidenceDatabase()
 
-        # GUI creates the case
         self.case_id = None
 
 
 
     # ==================================================
-    # CASE CREATION FROM GUI
+    # CASE CREATION
     # ==================================================
 
     def create_case(
 
             self,
 
+            case_id,
+
             case_name,
 
-            investigator,
-
-            generated_case_id):
+            investigator):
 
 
         self.case_id = self.database.create_case(
 
-            generated_case_id,
+            case_id,
 
             case_name,
 
@@ -95,11 +94,13 @@ class EvidenceManager:
 
         )
 
+
         print(
 
             f"[+] Mounted Devices Found: {len(mounted)}"
 
         )
+
 
         print(
 
@@ -162,7 +163,7 @@ class EvidenceManager:
 
 
         # ==============================================
-        # SAVE EVENTS
+        # SAVE EVENT LOGS
         # ==============================================
 
         for event in events:
@@ -177,13 +178,37 @@ class EvidenceManager:
 
             self.database.insert_event_log(
 
-                event["event_id"],
+                event.get(
 
-                event["source"],
+                    "event_id",
 
-                event["time"],
+                    0
 
-                event["description"],
+                ),
+
+                event.get(
+
+                    "source",
+
+                    "Windows Event Log"
+
+                ),
+
+                event.get(
+
+                    "time",
+
+                    "UNKNOWN"
+
+                ),
+
+                event.get(
+
+                    "description",
+
+                    "UNKNOWN"
+
+                ),
 
                 record_hash
 
@@ -192,7 +217,7 @@ class EvidenceManager:
 
 
         # ==============================================
-        # TIMELINE
+        # BUILD TIMELINE
         # ==============================================
 
         timeline = self.build_timeline(
@@ -206,6 +231,13 @@ class EvidenceManager:
         for item in timeline:
 
 
+            record_hash = HashUtils.sha256(
+
+                item
+
+            )
+
+
             self.database.insert_timeline_event(
 
                 item["time"],
@@ -214,7 +246,7 @@ class EvidenceManager:
 
                 item["description"],
 
-                HashUtils.sha256(item)
+                record_hash
 
             )
 
@@ -235,7 +267,7 @@ class EvidenceManager:
 
 
         # ==============================================
-        # REPORTS
+        # REPORT GENERATION
         # ==============================================
 
         JSONReport.save(
@@ -313,7 +345,13 @@ class EvidenceManager:
 
                 "time":
 
-                event["time"],
+                event.get(
+
+                    "time",
+
+                    "UNKNOWN"
+
+                ),
 
 
                 "artifact":
@@ -323,7 +361,13 @@ class EvidenceManager:
 
                 "description":
 
-                event["description"]
+                event.get(
+
+                    "description",
+
+                    "UNKNOWN"
+
+                )
 
             })
 
@@ -331,7 +375,7 @@ class EvidenceManager:
 
         timeline.sort(
 
-            key=lambda x:x["time"]
+            key=lambda x: x["time"]
 
         )
 
@@ -376,7 +420,15 @@ class EvidenceManager:
 
 
 
-                registry = mount.registry_name.lower()
+                registry_name = (
+
+                    mount.registry_name.lower()
+
+                    if mount.registry_name
+
+                    else ""
+
+                )
 
 
 
@@ -388,7 +440,7 @@ class EvidenceManager:
 
                     device.serial_number.lower()
 
-                    in registry
+                    in registry_name
 
                 ):
 
@@ -412,7 +464,7 @@ class EvidenceManager:
 
                     device.product.lower()
 
-                    in registry
+                    in registry_name
 
                 ):
 
@@ -463,9 +515,31 @@ class EvidenceManager:
 
                     "reasons":
 
-                    reasons
+                    reasons,
+
+
+                    "evidence":
+
+                    {
+
+                        "usb_registry_path":
+
+                        device.registry_path,
+
+
+                        "mounted_registry_name":
+
+                        mount.registry_name,
+
+
+                        "volume_guid":
+
+                        mount.volume_guid
+
+                    }
 
                 })
+
 
 
         return correlations
@@ -473,7 +547,7 @@ class EvidenceManager:
 
 
     # ==================================================
-    # QUERY
+    # DEVICE QUERY
     # ==================================================
 
     def query_device(self, serial):
@@ -495,13 +569,14 @@ class EvidenceManager:
 
 
     # ==================================================
-    # EXPORT
+    # EXPORT CASE
     # ==================================================
 
     def export_case(self):
 
 
         from reports.case_report import CaseExport
+
 
 
         CaseExport.export(

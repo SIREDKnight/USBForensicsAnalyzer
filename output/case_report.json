@@ -1,9 +1,9 @@
 {
     "case": {
         "id": 4,
-        "name": "GUI TEST 2",
-        "created_at": "2026-07-08 09:46:03",
-        "investigator": "Joe"
+        "name": "Joe",
+        "created_at": "2026-07-08 10:26:12",
+        "investigator": "CASE-20260708-132601"
     },
     "usb_devices": [
         {
@@ -89,7 +89,12 @@
             "reasons": [
                 "USB device artifact detected",
                 "Mounted volume artifact detected"
-            ]
+            ],
+            "evidence": {
+                "usb_registry_path": "SYSTEM\\CurrentControlSet\\Enum\\USBSTOR\\Disk&Ven_General&Prod_UDisk&Rev_5.00\\6&1526ad36&0&_&0",
+                "mounted_registry_name": "\\DosDevices\\C:",
+                "volume_guid": null
+            }
         },
         {
             "manufacturer": "Disk&Ven_General&Prod_UDisk&Rev_5.00",
@@ -100,7 +105,12 @@
             "reasons": [
                 "USB device artifact detected",
                 "Mounted volume artifact detected"
-            ]
+            ],
+            "evidence": {
+                "usb_registry_path": "SYSTEM\\CurrentControlSet\\Enum\\USBSTOR\\Disk&Ven_General&Prod_UDisk&Rev_5.00\\6&1526ad36&0&_&0",
+                "mounted_registry_name": "\\DosDevices\\D:",
+                "volume_guid": null
+            }
         },
         {
             "manufacturer": "Disk&Ven_General&Prod_UDisk&Rev_5.00",
@@ -111,7 +121,12 @@
             "reasons": [
                 "USB device artifact detected",
                 "Mounted volume artifact detected"
-            ]
+            ],
+            "evidence": {
+                "usb_registry_path": "SYSTEM\\CurrentControlSet\\Enum\\USBSTOR\\Disk&Ven_General&Prod_UDisk&Rev_5.00\\6&1526ad36&0&_&0",
+                "mounted_registry_name": "\\DosDevices\\E:",
+                "volume_guid": null
+            }
         }
     ],
     "summary": {

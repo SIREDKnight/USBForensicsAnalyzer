@@ -17,21 +17,14 @@ class CorrelationView:
 
         self.window.title(
 
-            "USB Evidence Correlation Analysis"
+            "Forensic Correlation Results"
 
         )
 
 
         self.window.geometry(
 
-            "1100x650"
-
-        )
-
-
-        self.window.configure(
-
-            bg="#1e1e1e"
+            "1100x700"
 
         )
 
@@ -41,7 +34,7 @@ class CorrelationView:
 
 
     # ==================================================
-    # CREATE INTERFACE
+    # INTERFACE
     # ==================================================
 
     def create_interface(self):
@@ -51,17 +44,13 @@ class CorrelationView:
 
             self.window,
 
-            text="FORENSIC CORRELATION ANALYSIS",
-
-            bg="#1e1e1e",
-
-            fg="#00d9ff",
+            text="DEVICE CORRELATION ANALYSIS",
 
             font=(
 
                 "Segoe UI",
 
-                18,
+                16,
 
                 "bold"
 
@@ -72,55 +61,7 @@ class CorrelationView:
 
         title.pack(
 
-            pady=20
-
-        )
-
-
-
-        subtitle = tk.Label(
-
-            self.window,
-
-            text=(
-
-                "Relationship analysis between USB devices "
-
-                "and mounted storage volumes"
-
-            ),
-
-            bg="#1e1e1e",
-
-            fg="white"
-
-        )
-
-
-        subtitle.pack()
-
-
-
-        # ===============================
-        # TABLE
-        # ===============================
-
-        frame = tk.Frame(
-
-            self.window
-
-        )
-
-
-        frame.pack(
-
-            fill="both",
-
-            expand=True,
-
-            padx=20,
-
-            pady=20
+            pady=10
 
         )
 
@@ -128,11 +69,7 @@ class CorrelationView:
 
         columns = (
 
-            "device",
-
-            "manufacturer",
-
-            "serial",
+            "product",
 
             "drive",
 
@@ -144,7 +81,7 @@ class CorrelationView:
 
         self.table = ttk.Treeview(
 
-            frame,
+            self.window,
 
             columns=columns,
 
@@ -154,190 +91,78 @@ class CorrelationView:
 
 
 
-        headings = {
+        self.table.heading(
 
-            "device":
+            "product",
 
-            "USB Device",
-
-
-            "manufacturer":
-
-            "Manufacturer",
-
-
-            "serial":
-
-            "Serial Number",
-
-
-            "drive":
-
-            "Drive",
-
-
-            "confidence":
-
-            "Confidence"
-
-        }
-
-
-
-        for column, text in headings.items():
-
-
-            self.table.heading(
-
-                column,
-
-                text=text
-
-            )
-
-
-
-        self.table.column(
-
-            "device",
-
-            width=200
+            text="USB Device"
 
         )
 
 
-        self.table.column(
-
-            "manufacturer",
-
-            width=160
-
-        )
-
-
-        self.table.column(
-
-            "serial",
-
-            width=260
-
-        )
-
-
-        self.table.column(
+        self.table.heading(
 
             "drive",
 
-            width=100
+            text="Drive"
 
         )
 
 
-        self.table.column(
+        self.table.heading(
 
             "confidence",
 
-            width=120
+            text="Confidence"
 
         )
 
-
-
-        scrollbar = ttk.Scrollbar(
-
-            frame,
-
-            orient="vertical",
-
-            command=self.table.yview
-
-        )
-
-
-        self.table.configure(
-
-            yscrollcommand=scrollbar.set
-
-        )
-
-
-
-        scrollbar.pack(
-
-            side="right",
-
-            fill="y"
-
-        )
 
 
         self.table.pack(
 
-            fill="both",
+            fill="x",
 
-            expand=True
+            padx=20
 
         )
 
 
 
-        self.load_results()
+        for index, item in enumerate(self.correlations):
 
 
+            self.table.insert(
 
-        # ===============================
-        # DETAILS PANEL
-        # ===============================
+                "",
 
-        details_title = tk.Label(
+                "end",
 
-            self.window,
+                iid=index,
 
-            text="Supporting Evidence",
+                values=(
 
-            bg="#1e1e1e",
+                    item.get(
 
-            fg="#00d9ff",
+                        "product",
 
-            font=(
+                        "UNKNOWN"
 
-                "Segoe UI",
+                    ),
 
-                12,
+                    item.get(
 
-                "bold"
+                        "drive_letter",
+
+                        "UNKNOWN"
+
+                    ),
+
+                    f"{item.get('confidence',0)}%"
+
+                )
 
             )
-
-        )
-
-
-        details_title.pack()
-
-
-
-        self.details = tk.Text(
-
-            self.window,
-
-            height=8,
-
-            width=120,
-
-            bg="#252526",
-
-            fg="white"
-
-        )
-
-
-        self.details.pack(
-
-            padx=20,
-
-            pady=10
-
-        )
 
 
 
@@ -351,100 +176,29 @@ class CorrelationView:
 
 
 
-    # ==================================================
-    # LOAD RESULTS
-    # ==================================================
+        self.details = tk.Text(
 
-    def load_results(self):
+            self.window,
 
+            height=20,
 
-        if not self.correlations:
+            width=120
 
-
-            self.table.insert(
-
-                "",
-
-                "end",
-
-                values=(
-
-                    "No matches",
-
-                    "",
-
-                    "",
-
-                    "",
-
-                    "0%"
-
-                )
-
-            )
+        )
 
 
-            return
+        self.details.pack(
 
+            padx=20,
 
+            pady=20
 
-        for item in self.correlations:
-
-
-            self.table.insert(
-
-                "",
-
-                "end",
-
-                values=(
-
-                    item.get(
-
-                        "product",
-
-                        "UNKNOWN"
-
-                    ),
-
-
-                    item.get(
-
-                        "manufacturer",
-
-                        "UNKNOWN"
-
-                    ),
-
-
-                    item.get(
-
-                        "serial_number",
-
-                        "UNKNOWN"
-
-                    ),
-
-
-                    item.get(
-
-                        "drive_letter",
-
-                        "UNKNOWN"
-
-                    ),
-
-
-                    f"{item.get('confidence',0)}%"
-
-                )
-
-            )
+        )
 
 
 
     # ==================================================
-    # SHOW DETAILS
+    # DETAILS
     # ==================================================
 
     def show_details(self, event):
@@ -456,27 +210,21 @@ class CorrelationView:
 
         if not selected:
 
-
             return
 
 
 
-        index = self.table.index(
+        index = int(
 
             selected[0]
 
         )
 
 
-
-        if index >= len(self.correlations):
-
-
-            return
-
-
-
         result = self.correlations[index]
+
+        print("VIEWER DATA:")
+        print(result)
 
 
 
@@ -484,7 +232,7 @@ class CorrelationView:
 
             "1.0",
 
-            "end"
+            tk.END
 
         )
 
@@ -492,16 +240,26 @@ class CorrelationView:
 
         self.details.insert(
 
-            "end",
+            tk.END,
 
-            f"Device: {result.get('product')}\n"
+            "CORRELATION DETAILS\n"
 
         )
 
 
         self.details.insert(
 
-            "end",
+            tk.END,
+
+            "=" * 60 + "\n\n"
+
+        )
+
+
+
+        self.details.insert(
+
+            tk.END,
 
             f"Manufacturer: {result.get('manufacturer')}\n"
 
@@ -510,7 +268,25 @@ class CorrelationView:
 
         self.details.insert(
 
-            "end",
+            tk.END,
+
+            f"Product: {result.get('product')}\n"
+
+        )
+
+
+        self.details.insert(
+
+            tk.END,
+
+            f"Serial Number: {result.get('serial_number')}\n"
+
+        )
+
+
+        self.details.insert(
+
+            tk.END,
 
             f"Drive: {result.get('drive_letter')}\n"
 
@@ -519,18 +295,28 @@ class CorrelationView:
 
         self.details.insert(
 
-            "end",
+            tk.END,
 
-            f"Confidence Score: {result.get('confidence')}%\n\n"
+            f"Confidence: {result.get('confidence')}%\n\n"
+
+        )
+
+
+
+        self.details.insert(
+
+            tk.END,
+
+            "SUPPORTING REASONS\n"
 
         )
 
 
         self.details.insert(
 
-            "end",
+            tk.END,
 
-            "Correlation Reasons:\n"
+            "-" * 60 + "\n"
 
         )
 
@@ -538,15 +324,59 @@ class CorrelationView:
 
         for reason in result.get(
 
-                "reasons",
+            "reasons",
 
-                []):
+            []
+
+        ):
 
 
             self.details.insert(
 
-                "end",
+                tk.END,
 
                 f"- {reason}\n"
+
+            )
+
+
+
+        self.details.insert(
+
+            tk.END,
+
+            "\nSUPPORTING EVIDENCE\n"
+
+        )
+
+
+        self.details.insert(
+
+            tk.END,
+
+            "-" * 60 + "\n"
+
+        )
+
+
+
+        evidence = result.get(
+
+            "evidence",
+
+            {}
+
+        )
+
+
+
+        for key, value in evidence.items():
+
+
+            self.details.insert(
+
+                tk.END,
+
+                f"{key}: {value}\n"
 
             )

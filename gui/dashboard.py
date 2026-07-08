@@ -1,7 +1,9 @@
-import tkinter as tk
-from tkinter import messagebox
 from pathlib import Path
 import os
+import shutil
+
+import tkinter as tk
+from tkinter import messagebox, filedialog
 
 from gui.timeline_view import TimelineView
 from gui.correlation_view import CorrelationView
@@ -12,6 +14,7 @@ class Dashboard:
 
 
     def __init__(self, manager):
+
 
         self.manager = manager
 
@@ -55,7 +58,7 @@ class Dashboard:
 
 
     # ==================================================
-    # MAIN INTERFACE
+    # INTERFACE
     # ==================================================
 
     def create_interface(self):
@@ -92,10 +95,6 @@ class Dashboard:
 
 
 
-        # ===============================
-        # CASE INFORMATION
-        # ===============================
-
         case_frame = tk.LabelFrame(
 
             self.window,
@@ -104,17 +103,7 @@ class Dashboard:
 
             bg="#1e1e1e",
 
-            fg="white",
-
-            font=(
-
-                "Segoe UI",
-
-                11,
-
-                "bold"
-
-            )
+            fg="white"
 
         )
 
@@ -135,19 +124,22 @@ class Dashboard:
 
         if case:
 
-            case_info = (
 
-                f"Case ID: {case['case_id']}    "
+            case_text = (
 
-                f"Case Name: {case['case_name']}    "
+                f"Case ID: {case[0]}     "
 
-                f"Investigator: {case['investigator']}"
+                f"Case Name: {case[1]}     "
+
+                f"Investigator: {case[3]}"
 
             )
 
+
         else:
 
-            case_info = "No active case"
+
+            case_text = "No active case"
 
 
 
@@ -155,19 +147,11 @@ class Dashboard:
 
             case_frame,
 
-            text=case_info,
+            text=case_text,
 
             bg="#1e1e1e",
 
-            fg="white",
-
-            font=(
-
-                "Segoe UI",
-
-                11
-
-            )
+            fg="white"
 
         ).pack(
 
@@ -198,7 +182,7 @@ class Dashboard:
 
 
 
-        self.usb_label = self.stat_box(
+        self.usb_label = self.create_stat(
 
             stats,
 
@@ -207,7 +191,7 @@ class Dashboard:
         )
 
 
-        self.mount_label = self.stat_box(
+        self.mount_label = self.create_stat(
 
             stats,
 
@@ -216,7 +200,7 @@ class Dashboard:
         )
 
 
-        self.timeline_label = self.stat_box(
+        self.timeline_label = self.create_stat(
 
             stats,
 
@@ -225,7 +209,7 @@ class Dashboard:
         )
 
 
-        self.correlation_label = self.stat_box(
+        self.correlation_label = self.create_stat(
 
             stats,
 
@@ -236,10 +220,10 @@ class Dashboard:
 
 
         # ===============================
-        # CONTROL BUTTONS
+        # BUTTONS
         # ===============================
 
-        controls = tk.Frame(
+        buttons = tk.Frame(
 
             self.window,
 
@@ -248,15 +232,11 @@ class Dashboard:
         )
 
 
-        controls.pack(
-
-            pady=20
-
-        )
+        buttons.pack()
 
 
 
-        buttons = [
+        options = [
 
             (
 
@@ -284,7 +264,7 @@ class Dashboard:
 
             (
 
-                "OPEN PDF REPORT",
+                "OPEN / DOWNLOAD PDF",
 
                 self.open_pdf
 
@@ -310,16 +290,16 @@ class Dashboard:
 
 
 
-        for index, item in enumerate(buttons):
+        for i, item in enumerate(options):
 
 
             tk.Button(
 
-                controls,
+                buttons,
 
                 text=item[0],
 
-                width=22,
+                width=25,
 
                 height=2,
 
@@ -327,9 +307,9 @@ class Dashboard:
 
             ).grid(
 
-                row=index // 3,
+                row=i // 3,
 
-                column=index % 3,
+                column=i % 3,
 
                 padx=10,
 
@@ -339,10 +319,6 @@ class Dashboard:
 
 
 
-        # ===============================
-        # STATUS
-        # ===============================
-
         self.status = tk.Label(
 
             self.window,
@@ -351,15 +327,7 @@ class Dashboard:
 
             bg="#1e1e1e",
 
-            fg="#00ff99",
-
-            font=(
-
-                "Segoe UI",
-
-                11
-
-            )
+            fg="#00ff99"
 
         )
 
@@ -376,34 +344,12 @@ class Dashboard:
     # STAT BOX
     # ==================================================
 
-    def stat_box(self, parent, title):
-
-
-        frame = tk.Frame(
-
-            parent,
-
-            bg="#252526",
-
-            width=220,
-
-            height=100
-
-        )
-
-
-        frame.pack(
-
-            side="left",
-
-            padx=15
-
-        )
+    def create_stat(self, parent, title):
 
 
         label = tk.Label(
 
-            frame,
+            parent,
 
             text=f"{title}\n0",
 
@@ -411,11 +357,15 @@ class Dashboard:
 
             fg="white",
 
+            width=20,
+
+            height=4,
+
             font=(
 
                 "Segoe UI",
 
-                12,
+                11,
 
                 "bold"
 
@@ -426,9 +376,9 @@ class Dashboard:
 
         label.pack(
 
-            padx=25,
+            side="left",
 
-            pady=25
+            padx=10
 
         )
 
@@ -449,7 +399,7 @@ class Dashboard:
 
             self.status.config(
 
-                text="Collecting forensic evidence..."
+                text="Collecting evidence..."
 
             )
 
@@ -478,7 +428,7 @@ class Dashboard:
 
             self.status.config(
 
-                text="Acquisition completed successfully"
+                text="Acquisition completed"
 
             )
 
@@ -492,13 +442,12 @@ class Dashboard:
             )
 
 
-
         except Exception as error:
 
 
             messagebox.showerror(
 
-                "Acquisition Error",
+                "Error",
 
                 str(error)
 
@@ -549,22 +498,6 @@ class Dashboard:
     def open_timeline(self):
 
 
-        if not self.timeline:
-
-
-            messagebox.showwarning(
-
-                "No Data",
-
-                "Run acquisition first."
-
-            )
-
-
-            return
-
-
-
         TimelineView(
 
             self.timeline
@@ -579,22 +512,7 @@ class Dashboard:
 
     def open_correlations(self):
 
-
-        if not self.correlations:
-
-
-            messagebox.showwarning(
-
-                "No Data",
-
-                "Run acquisition first."
-
-            )
-
-
-            return
-
-
+        print(self.correlations)
 
         CorrelationView(
 
@@ -605,7 +523,7 @@ class Dashboard:
 
 
     # ==================================================
-    # PDF
+    # PDF OPEN / DOWNLOAD
     # ==================================================
 
     def open_pdf(self):
@@ -619,7 +537,33 @@ class Dashboard:
 
 
 
-        if report.exists():
+        if not report.exists():
+
+
+            messagebox.showwarning(
+
+                "Missing Report",
+
+                "Generate the report first."
+
+            )
+
+
+            return
+
+
+
+        choice = messagebox.askyesno(
+
+            "PDF Report",
+
+            "Open PDF report?\n\nChoose NO to save a copy."
+
+        )
+
+
+
+        if choice:
 
 
             os.startfile(
@@ -632,13 +576,46 @@ class Dashboard:
         else:
 
 
-            messagebox.showwarning(
+            destination = filedialog.asksaveasfilename(
 
-                "Missing Report",
+                title="Save PDF Report",
 
-                "Generate report first."
+                defaultextension=".pdf",
+
+                filetypes=[
+
+                    (
+
+                        "PDF Files",
+
+                        "*.pdf"
+
+                    )
+
+                ]
 
             )
+
+
+            if destination:
+
+
+                shutil.copy(
+
+                    report,
+
+                    destination
+
+                )
+
+
+                messagebox.showinfo(
+
+                    "Saved",
+
+                    "PDF report saved successfully."
+
+                )
 
 
 
