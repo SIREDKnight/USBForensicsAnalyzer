@@ -1,14 +1,17 @@
 import tkinter as tk
-from tkinter import ttk, messagebox
+from tkinter import messagebox
 from pathlib import Path
 import os
+
+from gui.timeline_view import TimelineView
+from gui.correlation_view import CorrelationView
+
 
 
 class Dashboard:
 
 
     def __init__(self, manager):
-
 
         self.manager = manager
 
@@ -47,23 +50,18 @@ class Dashboard:
         )
 
 
-
         self.create_interface()
 
 
 
     # ==================================================
-    # INTERFACE
+    # MAIN INTERFACE
     # ==================================================
 
     def create_interface(self):
 
 
-        # ===============================
-        # HEADER
-        # ===============================
-
-        header = tk.Label(
+        title = tk.Label(
 
             self.window,
 
@@ -86,7 +84,7 @@ class Dashboard:
         )
 
 
-        header.pack(
+        title.pack(
 
             pady=20
 
@@ -102,7 +100,7 @@ class Dashboard:
 
             self.window,
 
-            text="Current Case",
+            text="Active Investigation",
 
             bg="#1e1e1e",
 
@@ -135,15 +133,21 @@ class Dashboard:
 
 
 
-        case_text = (
+        if case:
 
-            f"Case ID: {case['case_id']}     "
+            case_info = (
 
-            f"Case Name: {case['case_name']}     "
+                f"Case ID: {case['case_id']}    "
 
-            f"Investigator: {case['investigator']}"
+                f"Case Name: {case['case_name']}    "
 
-        )
+                f"Investigator: {case['investigator']}"
+
+            )
+
+        else:
+
+            case_info = "No active case"
 
 
 
@@ -151,7 +155,7 @@ class Dashboard:
 
             case_frame,
 
-            text=case_text,
+            text=case_info,
 
             bg="#1e1e1e",
 
@@ -194,56 +198,48 @@ class Dashboard:
 
 
 
-        self.usb_count = self.create_stat_box(
+        self.usb_label = self.stat_box(
 
             stats,
 
-            "USB Devices",
-
-            0
+            "USB DEVICES"
 
         )
 
 
-        self.mount_count = self.create_stat_box(
+        self.mount_label = self.stat_box(
 
             stats,
 
-            "Mounted Drives",
-
-            1
+            "MOUNTED DRIVES"
 
         )
 
 
-        self.timeline_count = self.create_stat_box(
+        self.timeline_label = self.stat_box(
 
             stats,
 
-            "Timeline Events",
-
-            2
+            "TIMELINE EVENTS"
 
         )
 
 
-        self.correlation_count = self.create_stat_box(
+        self.correlation_label = self.stat_box(
 
             stats,
 
-            "Correlations",
-
-            3
+            "CORRELATIONS"
 
         )
 
 
 
         # ===============================
-        # BUTTONS
+        # CONTROL BUTTONS
         # ===============================
 
-        buttons = tk.Frame(
+        controls = tk.Frame(
 
             self.window,
 
@@ -252,7 +248,7 @@ class Dashboard:
         )
 
 
-        buttons.pack(
+        controls.pack(
 
             pady=20
 
@@ -260,109 +256,98 @@ class Dashboard:
 
 
 
-        tk.Button(
+        buttons = [
 
-            buttons,
+            (
 
-            text="START ACQUISITION",
+                "START ACQUISITION",
 
-            width=25,
+                self.acquire
 
-            height=2,
+            ),
 
-            command=self.run_acquisition
+            (
 
-        ).grid(
+                "VIEW TIMELINE",
 
-            row=0,
+                self.open_timeline
 
-            column=0,
+            ),
 
-            padx=10
+            (
 
-        )
+                "VIEW CORRELATIONS",
 
+                self.open_correlations
 
+            ),
 
-        tk.Button(
+            (
 
-            buttons,
+                "OPEN PDF REPORT",
 
-            text="OPEN PDF REPORT",
+                self.open_pdf
 
-            width=25,
+            ),
 
-            height=2,
+            (
 
-            command=self.open_pdf
+                "EXPORT CASE",
 
-        ).grid(
+                self.export_case
 
-            row=0,
+            ),
 
-            column=1,
+            (
 
-            padx=10
+                "EXIT",
 
-        )
+                self.window.destroy
 
+            )
 
-
-        tk.Button(
-
-            buttons,
-
-            text="EXPORT CASE",
-
-            width=25,
-
-            height=2,
-
-            command=self.export_case
-
-        ).grid(
-
-            row=0,
-
-            column=2,
-
-            padx=10
-
-        )
+        ]
 
 
 
-        tk.Button(
+        for index, item in enumerate(buttons):
 
-            buttons,
 
-            text="EXIT",
+            tk.Button(
 
-            width=20,
+                controls,
 
-            command=self.window.destroy
+                text=item[0],
 
-        ).grid(
+                width=22,
 
-            row=0,
+                height=2,
 
-            column=3,
+                command=item[1]
 
-            padx=10
+            ).grid(
 
-        )
+                row=index // 3,
+
+                column=index % 3,
+
+                padx=10,
+
+                pady=10
+
+            )
 
 
 
         # ===============================
-        # STATUS AREA
+        # STATUS
         # ===============================
 
         self.status = tk.Label(
 
             self.window,
 
-            text="Ready for acquisition",
+            text="Ready",
 
             bg="#1e1e1e",
 
@@ -387,21 +372,11 @@ class Dashboard:
 
 
 
-
-
     # ==================================================
     # STAT BOX
     # ==================================================
 
-    def create_stat_box(
-
-            self,
-
-            parent,
-
-            title,
-
-            column):
+    def stat_box(self, parent, title):
 
 
         frame = tk.Frame(
@@ -410,18 +385,16 @@ class Dashboard:
 
             bg="#252526",
 
-            width=200,
+            width=220,
 
             height=100
 
         )
 
 
-        frame.grid(
+        frame.pack(
 
-            row=0,
-
-            column=column,
+            side="left",
 
             padx=15
 
@@ -453,7 +426,7 @@ class Dashboard:
 
         label.pack(
 
-            padx=30,
+            padx=25,
 
             pady=25
 
@@ -464,13 +437,11 @@ class Dashboard:
 
 
 
-
-
     # ==================================================
     # ACQUISITION
     # ==================================================
 
-    def run_acquisition(self):
+    def acquire(self):
 
 
         try:
@@ -478,7 +449,7 @@ class Dashboard:
 
             self.status.config(
 
-                text="Collecting forensic artifacts..."
+                text="Collecting forensic evidence..."
 
             )
 
@@ -501,32 +472,7 @@ class Dashboard:
 
 
 
-            self.usb_count.config(
-
-                text=f"USB Devices\n{len(self.devices)}"
-
-            )
-
-
-            self.mount_count.config(
-
-                text=f"Mounted Drives\n{len(self.mounted)}"
-
-            )
-
-
-            self.timeline_count.config(
-
-                text=f"Timeline Events\n{len(self.timeline)}"
-
-            )
-
-
-            self.correlation_count.config(
-
-                text=f"Correlations\n{len(self.correlations)}"
-
-            )
+            self.update_statistics()
 
 
 
@@ -537,12 +483,11 @@ class Dashboard:
             )
 
 
-
             messagebox.showinfo(
 
-                "Complete",
+                "Completed",
 
-                "Forensic acquisition completed."
+                "Forensic acquisition completed successfully."
 
             )
 
@@ -561,6 +506,102 @@ class Dashboard:
 
 
 
+    # ==================================================
+    # UPDATE COUNTERS
+    # ==================================================
+
+    def update_statistics(self):
+
+
+        self.usb_label.config(
+
+            text=f"USB DEVICES\n{len(self.devices)}"
+
+        )
+
+
+        self.mount_label.config(
+
+            text=f"MOUNTED DRIVES\n{len(self.mounted)}"
+
+        )
+
+
+        self.timeline_label.config(
+
+            text=f"TIMELINE EVENTS\n{len(self.timeline)}"
+
+        )
+
+
+        self.correlation_label.config(
+
+            text=f"CORRELATIONS\n{len(self.correlations)}"
+
+        )
+
+
+
+    # ==================================================
+    # TIMELINE
+    # ==================================================
+
+    def open_timeline(self):
+
+
+        if not self.timeline:
+
+
+            messagebox.showwarning(
+
+                "No Data",
+
+                "Run acquisition first."
+
+            )
+
+
+            return
+
+
+
+        TimelineView(
+
+            self.timeline
+
+        )
+
+
+
+    # ==================================================
+    # CORRELATIONS
+    # ==================================================
+
+    def open_correlations(self):
+
+
+        if not self.correlations:
+
+
+            messagebox.showwarning(
+
+                "No Data",
+
+                "Run acquisition first."
+
+            )
+
+
+            return
+
+
+
+        CorrelationView(
+
+            self.correlations
+
+        )
+
 
 
     # ==================================================
@@ -570,19 +611,20 @@ class Dashboard:
     def open_pdf(self):
 
 
-        pdf = Path(
+        report = Path(
 
             "output/case_report.pdf"
 
         )
 
 
-        if pdf.exists():
+
+        if report.exists():
 
 
             os.startfile(
 
-                pdf
+                report
 
             )
 
@@ -594,11 +636,9 @@ class Dashboard:
 
                 "Missing Report",
 
-                "Run acquisition first."
+                "Generate report first."
 
             )
-
-
 
 
 
@@ -620,7 +660,7 @@ class Dashboard:
 
                 "Export Complete",
 
-                "Case bundle exported."
+                "Case bundle exported successfully."
 
             )
 

@@ -15,6 +15,9 @@ class CaseWindow:
     def __init__(self, parent):
 
 
+        self.parent = parent
+
+
         self.window = tk.Toplevel(parent)
 
 
@@ -27,7 +30,7 @@ class CaseWindow:
 
         self.window.geometry(
 
-            "500x450"
+            "550x500"
 
         )
 
@@ -39,6 +42,8 @@ class CaseWindow:
         )
 
 
+        # Single EvidenceManager instance
+
         self.manager = EvidenceManager()
 
 
@@ -46,10 +51,14 @@ class CaseWindow:
 
 
 
+    # ==================================================
+    # CREATE INTERFACE
+    # ==================================================
+
     def create_interface(self):
 
 
-        tk.Label(
+        title = tk.Label(
 
             self.window,
 
@@ -63,19 +72,26 @@ class CaseWindow:
 
                 "Segoe UI",
 
-                16,
+                18,
 
                 "bold"
 
             )
 
-        ).pack(
+        )
+
+
+        title.pack(
 
             pady=25
 
         )
 
 
+
+        # -------------------------------
+        # CASE NAME
+        # -------------------------------
 
         tk.Label(
 
@@ -85,58 +101,50 @@ class CaseWindow:
 
             bg="#1e1e1e",
 
-            fg="white"
+            fg="white",
+
+            font=(
+
+                "Segoe UI",
+
+                11
+
+            )
 
         ).pack()
 
 
 
-        self.case_name = tk.Entry(
+        self.case_entry = tk.Entry(
 
             self.window,
 
-            width=40
+            width=45,
+
+            font=(
+
+                "Segoe UI",
+
+                11
+
+            )
 
         )
 
-        self.case_name.pack(
+
+        self.case_entry.pack(
 
             pady=10
 
         )
 
 
+
+        # -------------------------------
+        # INVESTIGATOR
+        # -------------------------------
 
         investigator = getpass.getuser()
-
-
-
-        tk.Label(
-
-            self.window,
-
-            text=f"Investigator: {investigator}",
-
-            bg="#1e1e1e",
-
-            fg="white"
-
-        ).pack(
-
-            pady=10
-
-        )
-
-
-
-        timestamp = datetime.now().strftime(
-
-            "%Y%m%d-%H%M%S"
-
-        )
-
-
-        self.case_id = f"CASE-{timestamp}"
 
 
 
@@ -146,13 +154,74 @@ class CaseWindow:
 
             text=(
 
-                f"Generated Case ID:\n{self.case_id}"
+                f"Investigator: {investigator}"
 
             ),
 
             bg="#1e1e1e",
 
-            fg="white"
+            fg="white",
+
+            font=(
+
+                "Segoe UI",
+
+                11
+
+            )
+
+        ).pack(
+
+            pady=10
+
+        )
+
+
+
+        # -------------------------------
+        # CASE ID GENERATION
+        # -------------------------------
+
+        timestamp = datetime.now().strftime(
+
+            "%Y%m%d-%H%M%S"
+
+        )
+
+
+        self.case_id = (
+
+            f"CASE-{timestamp}"
+
+        )
+
+
+
+        tk.Label(
+
+            self.window,
+
+            text=(
+
+                "Generated Case ID\n"
+
+                f"{self.case_id}"
+
+            ),
+
+            bg="#1e1e1e",
+
+            fg="white",
+
+            font=(
+
+                "Segoe UI",
+
+                11,
+
+                "bold"
+
+            )
 
         ).pack(
 
@@ -161,6 +230,10 @@ class CaseWindow:
         )
 
 
+
+        # -------------------------------
+        # START BUTTON
+        # -------------------------------
 
         tk.Button(
 
@@ -168,11 +241,21 @@ class CaseWindow:
 
             text="START INVESTIGATION",
 
-            width=25,
+            width=30,
 
             height=2,
 
-            command=self.start_case
+            font=(
+
+                "Segoe UI",
+
+                11,
+
+                "bold"
+
+            ),
+
+            command=self.create_case
 
         ).pack(
 
@@ -182,23 +265,28 @@ class CaseWindow:
 
 
 
-    def start_case(self):
+    # ==================================================
+    # CREATE CASE
+    # ==================================================
+
+    def create_case(self):
 
 
-        name = self.case_name.get().strip()
+        case_name = self.case_entry.get().strip()
 
 
 
-        if not name:
+        if not case_name:
 
 
             messagebox.showwarning(
 
-                "Missing Case Name",
+                "Missing Information",
 
-                "Enter a case name."
+                "Please enter a case name."
 
             )
+
 
             return
 
@@ -208,40 +296,58 @@ class CaseWindow:
 
 
 
-        self.manager.create_case(
-
-            name,
-
-            investigator,
-
-            self.case_id
-
-        )
+        try:
 
 
+            self.manager.create_case(
 
-        messagebox.showinfo(
+                case_name,
 
-            "Case Created",
+                investigator,
 
-            (
-
-                f"Case ID: {self.case_id}\n"
-
-                f"Investigator: {investigator}"
+                self.case_id
 
             )
 
-        )
+
+
+            messagebox.showinfo(
+
+                "Case Created",
+
+                (
+
+                    "Investigation created successfully.\n\n"
+
+                    f"Case ID: {self.case_id}\n"
+
+                    f"Investigator: {investigator}"
+
+                )
+
+            )
 
 
 
-        self.window.destroy()
+            self.window.destroy()
 
 
 
-        Dashboard(
+            Dashboard(
 
-            self.manager
+                self.manager
 
-        )
+            )
+
+
+
+        except Exception as error:
+
+
+            messagebox.showerror(
+
+                "Case Creation Error",
+
+                str(error)
+
+            )

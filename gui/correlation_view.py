@@ -12,7 +12,6 @@ class CorrelationView:
         self.correlations = correlations
 
 
-
         self.window = tk.Toplevel()
 
 
@@ -25,7 +24,7 @@ class CorrelationView:
 
         self.window.geometry(
 
-            "1000x600"
+            "1100x650"
 
         )
 
@@ -37,13 +36,12 @@ class CorrelationView:
         )
 
 
-
         self.create_interface()
 
 
 
     # ==================================================
-    # INTERFACE
+    # CREATE INTERFACE
     # ==================================================
 
     def create_interface(self):
@@ -80,6 +78,33 @@ class CorrelationView:
 
 
 
+        subtitle = tk.Label(
+
+            self.window,
+
+            text=(
+
+                "Relationship analysis between USB devices "
+
+                "and mounted storage volumes"
+
+            ),
+
+            bg="#1e1e1e",
+
+            fg="white"
+
+        )
+
+
+        subtitle.pack()
+
+
+
+        # ===============================
+        # TABLE
+        # ===============================
+
         frame = tk.Frame(
 
             self.window
@@ -95,7 +120,7 @@ class CorrelationView:
 
             padx=20,
 
-            pady=10
+            pady=20
 
         )
 
@@ -106,6 +131,8 @@ class CorrelationView:
             "device",
 
             "manufacturer",
+
+            "serial",
 
             "drive",
 
@@ -127,57 +154,72 @@ class CorrelationView:
 
 
 
-        self.table.heading(
+        headings = {
 
-            "device",
+            "device":
 
-            text="USB Device"
-
-        )
+            "USB Device",
 
 
-        self.table.heading(
+            "manufacturer":
 
-            "manufacturer",
-
-            text="Manufacturer"
-
-        )
+            "Manufacturer",
 
 
-        self.table.heading(
+            "serial":
 
-            "drive",
-
-            text="Drive"
-
-        )
+            "Serial Number",
 
 
-        self.table.heading(
+            "drive":
 
-            "confidence",
+            "Drive",
 
-            text="Confidence"
 
-        )
+            "confidence":
+
+            "Confidence"
+
+        }
 
 
 
-        self.table.column(
+        for column, text in headings.items():
 
-            "device",
 
-            width=250
+            self.table.heading(
 
-        )
+                column,
+
+                text=text
+
+            )
+
 
 
         self.table.column(
 
-            "manufacturer",
+            "device",
 
             width=200
+
+        )
+
+
+        self.table.column(
+
+            "manufacturer",
+
+            width=160
+
+        )
+
+
+        self.table.column(
+
+            "serial",
+
+            width=260
 
         )
 
@@ -243,79 +285,19 @@ class CorrelationView:
 
 
 
-        self.create_reason_box()
+        # ===============================
+        # DETAILS PANEL
+        # ===============================
 
-
-
-    # ==================================================
-    # LOAD CORRELATIONS
-    # ==================================================
-
-    def load_results(self):
-
-
-        for item in self.correlations:
-
-
-            self.table.insert(
-
-                "",
-
-                "end",
-
-                values=(
-
-                    item.get(
-
-                        "product",
-
-                        "Unknown"
-
-                    ),
-
-
-                    item.get(
-
-                        "manufacturer",
-
-                        "Unknown"
-
-                    ),
-
-
-                    item.get(
-
-                        "drive_letter",
-
-                        "Unknown"
-
-                    ),
-
-
-                    f"{item.get('confidence',0)}%"
-
-                )
-
-            )
-
-
-
-    # ==================================================
-    # DETAILS BOX
-    # ==================================================
-
-    def create_reason_box(self):
-
-
-        label = tk.Label(
+        details_title = tk.Label(
 
             self.window,
 
-            text="Correlation Evidence / Reasons",
+            text="Supporting Evidence",
 
             bg="#1e1e1e",
 
-            fg="white",
+            fg="#00d9ff",
 
             font=(
 
@@ -330,21 +312,17 @@ class CorrelationView:
         )
 
 
-        label.pack(
-
-            pady=10
-
-        )
+        details_title.pack()
 
 
 
-        self.reason_text = tk.Text(
+        self.details = tk.Text(
 
             self.window,
 
             height=8,
 
-            width=100,
+            width=120,
 
             bg="#252526",
 
@@ -353,7 +331,7 @@ class CorrelationView:
         )
 
 
-        self.reason_text.pack(
+        self.details.pack(
 
             padx=20,
 
@@ -374,6 +352,98 @@ class CorrelationView:
 
 
     # ==================================================
+    # LOAD RESULTS
+    # ==================================================
+
+    def load_results(self):
+
+
+        if not self.correlations:
+
+
+            self.table.insert(
+
+                "",
+
+                "end",
+
+                values=(
+
+                    "No matches",
+
+                    "",
+
+                    "",
+
+                    "",
+
+                    "0%"
+
+                )
+
+            )
+
+
+            return
+
+
+
+        for item in self.correlations:
+
+
+            self.table.insert(
+
+                "",
+
+                "end",
+
+                values=(
+
+                    item.get(
+
+                        "product",
+
+                        "UNKNOWN"
+
+                    ),
+
+
+                    item.get(
+
+                        "manufacturer",
+
+                        "UNKNOWN"
+
+                    ),
+
+
+                    item.get(
+
+                        "serial_number",
+
+                        "UNKNOWN"
+
+                    ),
+
+
+                    item.get(
+
+                        "drive_letter",
+
+                        "UNKNOWN"
+
+                    ),
+
+
+                    f"{item.get('confidence',0)}%"
+
+                )
+
+            )
+
+
+
+    # ==================================================
     # SHOW DETAILS
     # ==================================================
 
@@ -385,6 +455,7 @@ class CorrelationView:
 
 
         if not selected:
+
 
             return
 
@@ -398,11 +469,18 @@ class CorrelationView:
 
 
 
+        if index >= len(self.correlations):
+
+
+            return
+
+
+
         result = self.correlations[index]
 
 
 
-        self.reason_text.delete(
+        self.details.delete(
 
             "1.0",
 
@@ -412,7 +490,7 @@ class CorrelationView:
 
 
 
-        self.reason_text.insert(
+        self.details.insert(
 
             "end",
 
@@ -421,7 +499,16 @@ class CorrelationView:
         )
 
 
-        self.reason_text.insert(
+        self.details.insert(
+
+            "end",
+
+            f"Manufacturer: {result.get('manufacturer')}\n"
+
+        )
+
+
+        self.details.insert(
 
             "end",
 
@@ -430,20 +517,20 @@ class CorrelationView:
         )
 
 
-        self.reason_text.insert(
+        self.details.insert(
 
             "end",
 
-            f"Confidence: {result.get('confidence')}%\n\n"
+            f"Confidence Score: {result.get('confidence')}%\n\n"
 
         )
 
 
-        self.reason_text.insert(
+        self.details.insert(
 
             "end",
 
-            "Supporting Evidence:\n"
+            "Correlation Reasons:\n"
 
         )
 
@@ -451,14 +538,12 @@ class CorrelationView:
 
         for reason in result.get(
 
-            "reasons",
+                "reasons",
 
-            []
-
-        ):
+                []):
 
 
-            self.reason_text.insert(
+            self.details.insert(
 
                 "end",
 

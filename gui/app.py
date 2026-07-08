@@ -1,5 +1,4 @@
 import tkinter as tk
-from tkinter import messagebox
 
 from gui.styles import GUIStyles
 from gui.case_window import CaseWindow
@@ -11,13 +10,16 @@ class USBForensicsApp:
 
     def __init__(self):
 
+
         self.root = tk.Tk()
+
 
         GUIStyles.configure_window(
 
             self.root
 
         )
+
 
         GUIStyles.apply(
 
@@ -37,9 +39,9 @@ class USBForensicsApp:
     def create_interface(self):
 
 
-        # ==============================
+        # ===============================
         # HEADER
-        # ==============================
+        # ===============================
 
         header = tk.Frame(
 
@@ -49,11 +51,10 @@ class USBForensicsApp:
 
         )
 
+
         header.pack(
 
-            fill="x",
-
-            pady=20
+            pady=40
 
         )
 
@@ -73,7 +74,7 @@ class USBForensicsApp:
 
                 "Segoe UI",
 
-                24,
+                26,
 
                 "bold"
 
@@ -90,56 +91,9 @@ class USBForensicsApp:
 
             header,
 
-            text="Digital Forensics & Incident Response Platform",
-
-            bg="#1e1e1e",
-
-            fg="white",
-
-            font=(
-
-                "Segoe UI",
-
-                12
-
-            )
-
-        )
-
-
-        subtitle.pack()
-
-
-
-        # ==============================
-        # CENTER PANEL
-        # ==============================
-
-        panel = tk.Frame(
-
-            self.root,
-
-            bg="#1e1e1e"
-
-        )
-
-        panel.pack(
-
-            expand=True
-
-        )
-
-
-
-        description = tk.Label(
-
-            panel,
-
             text=(
 
-                "Automated Windows USB Artifact Collection\n"
-
-                "Registry Analysis | Event Correlation | Evidence Reporting"
+                "Digital Forensics & Incident Response Platform"
 
             ),
 
@@ -158,17 +112,87 @@ class USBForensicsApp:
         )
 
 
-        description.pack(
+        subtitle.pack(
 
-            pady=40
+            pady=10
 
         )
 
 
 
-        create_button = tk.Button(
+        # ===============================
+        # DESCRIPTION
+        # ===============================
 
-            panel,
+        body = tk.Frame(
+
+            self.root,
+
+            bg="#1e1e1e"
+
+        )
+
+
+        body.pack(
+
+            expand=True
+
+        )
+
+
+
+        description = tk.Label(
+
+            body,
+
+            text=(
+
+                "Automated Windows USB Artifact Collection\n\n"
+
+                "• Registry Artifact Analysis\n"
+
+                "• Event Log Investigation\n"
+
+                "• Device Correlation\n"
+
+                "• Evidence Reporting\n"
+
+                "• Case Export Management"
+
+            ),
+
+            bg="#1e1e1e",
+
+            fg="white",
+
+            font=(
+
+                "Segoe UI",
+
+                12
+
+            ),
+
+            justify="center"
+
+        )
+
+
+        description.pack(
+
+            pady=30
+
+        )
+
+
+
+        # ===============================
+        # BUTTONS
+        # ===============================
+
+        tk.Button(
+
+            body,
 
             text="CREATE NEW FORENSIC CASE",
 
@@ -186,12 +210,9 @@ class USBForensicsApp:
 
             ),
 
-            command=self.open_case_window
+            command=self.open_case
 
-        )
-
-
-        create_button.pack(
+        ).pack(
 
             pady=20
 
@@ -199,9 +220,9 @@ class USBForensicsApp:
 
 
 
-        exit_button = tk.Button(
+        tk.Button(
 
-            panel,
+            body,
 
             text="EXIT",
 
@@ -209,16 +230,13 @@ class USBForensicsApp:
 
             command=self.root.destroy
 
-        )
-
-
-        exit_button.pack()
+        ).pack()
 
 
 
-        # ==============================
+        # ===============================
         # FOOTER
-        # ==============================
+        # ===============================
 
         footer = tk.Label(
 
@@ -256,10 +274,10 @@ class USBForensicsApp:
 
 
     # ==================================================
-    # CASE WINDOW
+    # OPEN CASE WINDOW
     # ==================================================
 
-    def open_case_window(self):
+    def open_case(self):
 
 
         CaseWindow(
@@ -278,12 +296,3 @@ class USBForensicsApp:
 
 
         self.root.mainloop()
-
-
-
-if __name__ == "__main__":
-
-
-    app = USBForensicsApp()
-
-    app.run()

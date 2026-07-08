@@ -12,7 +12,6 @@ class TimelineView:
         self.timeline = timeline
 
 
-
         self.window = tk.Toplevel()
 
 
@@ -25,7 +24,7 @@ class TimelineView:
 
         self.window.geometry(
 
-            "900x500"
+            "1000x600"
 
         )
 
@@ -37,13 +36,12 @@ class TimelineView:
         )
 
 
-
         self.create_interface()
 
 
 
     # ==================================================
-    # INTERFACE
+    # CREATE WINDOW
     # ==================================================
 
     def create_interface(self):
@@ -53,7 +51,7 @@ class TimelineView:
 
             self.window,
 
-            text="FORENSIC TIMELINE",
+            text="FORENSIC TIMELINE ANALYSIS",
 
             bg="#1e1e1e",
 
@@ -80,8 +78,39 @@ class TimelineView:
 
 
 
+        info = tk.Label(
+
+            self.window,
+
+            text=(
+
+                "Collected Windows forensic events "
+
+                "ordered by timestamp"
+
+            ),
+
+            bg="#1e1e1e",
+
+            fg="white",
+
+            font=(
+
+                "Segoe UI",
+
+                10
+
+            )
+
+        )
+
+
+        info.pack()
+
+
+
         # ===============================
-        # TABLE
+        # TABLE FRAME
         # ===============================
 
         frame = tk.Frame(
@@ -99,7 +128,7 @@ class TimelineView:
 
             padx=20,
 
-            pady=10
+            pady=20
 
         )
 
@@ -133,7 +162,7 @@ class TimelineView:
 
             "time",
 
-            text="Time"
+            text="Timestamp"
 
         )
 
@@ -142,7 +171,7 @@ class TimelineView:
 
             "artifact",
 
-            text="Artifact"
+            text="Artifact Source"
 
         )
 
@@ -161,7 +190,7 @@ class TimelineView:
 
             "time",
 
-            width=200
+            width=220
 
         )
 
@@ -170,7 +199,7 @@ class TimelineView:
 
             "artifact",
 
-            width=150
+            width=180
 
         )
 
@@ -179,7 +208,7 @@ class TimelineView:
 
             "description",
 
-            width=450
+            width=500
 
         )
 
@@ -203,7 +232,6 @@ class TimelineView:
         )
 
 
-
         scrollbar.pack(
 
             side="right",
@@ -223,15 +251,41 @@ class TimelineView:
 
 
 
-        self.load_events()
+        self.load_timeline()
 
 
 
     # ==================================================
-    # LOAD TIMELINE
+    # LOAD EVENTS
     # ==================================================
 
-    def load_events(self):
+    def load_timeline(self):
+
+
+        if not self.timeline:
+
+
+            self.table.insert(
+
+                "",
+
+                "end",
+
+                values=(
+
+                    "N/A",
+
+                    "NONE",
+
+                    "No timeline events available"
+
+                )
+
+            )
+
+
+            return
+
 
 
         for event in self.timeline:
@@ -245,32 +299,64 @@ class TimelineView:
 
                 values=(
 
-                    event.get(
+                    self.safe_value(
 
-                        "time",
+                        event,
 
-                        "UNKNOWN"
-
-                    ),
-
-
-                    event.get(
-
-                        "artifact",
-
-                        "UNKNOWN"
+                        "time"
 
                     ),
 
 
-                    event.get(
+                    self.safe_value(
 
-                        "description",
+                        event,
 
-                        "UNKNOWN"
+                        "artifact"
+
+                    ),
+
+
+                    self.safe_value(
+
+                        event,
+
+                        "description"
 
                     )
 
                 )
 
             )
+
+
+
+    # ==================================================
+    # SAFE DATA HANDLING
+    # ==================================================
+
+    def safe_value(
+
+            self,
+
+            event,
+
+            key):
+
+
+        value = event.get(
+
+            key,
+
+            "UNKNOWN"
+
+        )
+
+
+        if value is None:
+
+
+            return "UNKNOWN"
+
+
+        return str(value)
