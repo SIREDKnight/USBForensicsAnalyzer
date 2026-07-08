@@ -88,31 +88,15 @@ class EvidenceManager:
 
 
 
-        print(
+        print(f"[+] USB Devices Found: {len(devices)}")
 
-            f"[+] USB Devices Found: {len(devices)}"
+        print(f"[+] Mounted Devices Found: {len(mounted)}")
 
-        )
-
-
-        print(
-
-            f"[+] Mounted Devices Found: {len(mounted)}"
-
-        )
-
-
-        print(
-
-            f"[+] Event Logs Found: {len(events)}"
-
-        )
+        print(f"[+] Event Logs Found: {len(events)}")
 
 
 
-        # ==============================================
         # SAVE USB DEVICES
-        # ==============================================
 
         for device in devices:
 
@@ -136,9 +120,7 @@ class EvidenceManager:
 
 
 
-        # ==============================================
         # SAVE MOUNTED DEVICES
-        # ==============================================
 
         for mount in mounted:
 
@@ -162,53 +144,23 @@ class EvidenceManager:
 
 
 
-        # ==============================================
         # SAVE EVENT LOGS
-        # ==============================================
 
         for event in events:
 
 
-            record_hash = HashUtils.sha256(
-
-                event
-
-            )
+            record_hash = HashUtils.sha256(event)
 
 
             self.database.insert_event_log(
 
-                event.get(
+                event.get("event_id", 0),
 
-                    "event_id",
+                event.get("source", "Windows Event Log"),
 
-                    0
+                event.get("time", "UNKNOWN"),
 
-                ),
-
-                event.get(
-
-                    "source",
-
-                    "Windows Event Log"
-
-                ),
-
-                event.get(
-
-                    "time",
-
-                    "UNKNOWN"
-
-                ),
-
-                event.get(
-
-                    "description",
-
-                    "UNKNOWN"
-
-                ),
+                event.get("description", "UNKNOWN"),
 
                 record_hash
 
@@ -216,11 +168,13 @@ class EvidenceManager:
 
 
 
-        # ==============================================
-        # BUILD TIMELINE
-        # ==============================================
+        # BUILD COMPLETE TIMELINE
 
         timeline = self.build_timeline(
+
+            devices,
+
+            mounted,
 
             events
 
@@ -231,11 +185,7 @@ class EvidenceManager:
         for item in timeline:
 
 
-            record_hash = HashUtils.sha256(
-
-                item
-
-            )
+            record_hash = HashUtils.sha256(item)
 
 
             self.database.insert_timeline_event(
@@ -252,10 +202,6 @@ class EvidenceManager:
 
 
 
-        # ==============================================
-        # CORRELATION
-        # ==============================================
-
         correlations = self.correlate(
 
             devices,
@@ -265,10 +211,6 @@ class EvidenceManager:
         )
 
 
-
-        # ==============================================
-        # REPORT GENERATION
-        # ==============================================
 
         JSONReport.save(
 
@@ -331,12 +273,84 @@ class EvidenceManager:
     # TIMELINE BUILDER
     # ==================================================
 
-    def build_timeline(self, events):
+    def build_timeline(
+
+            self,
+
+            devices,
+
+            mounted,
+
+            events):
 
 
         timeline = []
 
 
+
+        # USB REGISTRY ARTIFACTS
+
+        for device in devices:
+
+
+            timeline.append({
+
+                "time":
+
+                device.registry_time,
+
+
+                "artifact":
+
+                "REGISTRY",
+
+
+                "description":
+
+                (
+
+                    f"USB device installed: "
+
+                    f"{device.product} "
+
+                    f"Serial: {device.serial_number}"
+
+                )
+
+            })
+
+
+
+        # MOUNTED DEVICE ARTIFACTS
+
+        for mount in mounted:
+
+
+            timeline.append({
+
+                "time":
+
+                mount.registry_time,
+
+
+                "artifact":
+
+                "MOUNTED_DEVICE",
+
+
+                "description":
+
+                (
+
+                    f"Drive {mount.drive_letter} assigned"
+
+                )
+
+            })
+
+
+
+        # EVENT LOG ARTIFACTS
 
         for event in events:
 
@@ -447,7 +461,6 @@ class EvidenceManager:
 
                     score += 40
 
-
                     reasons.append(
 
                         "Serial number match"
@@ -470,7 +483,6 @@ class EvidenceManager:
 
 
                     score += 20
-
 
                     reasons.append(
 
@@ -527,9 +539,19 @@ class EvidenceManager:
                         device.registry_path,
 
 
+                        "usb_registry_time":
+
+                        device.registry_time,
+
+
                         "mounted_registry_name":
 
                         mount.registry_name,
+
+
+                        "mounted_registry_time":
+
+                        mount.registry_time,
 
 
                         "volume_guid":
@@ -539,7 +561,6 @@ class EvidenceManager:
                     }
 
                 })
-
 
 
         return correlations
@@ -553,15 +574,9 @@ class EvidenceManager:
     def query_device(self, serial):
 
 
-        device = self.database.get_device_by_serial(
-
-            serial
-
-        )
-
+        device = self.database.get_device_by_serial(serial)
 
         timeline = self.database.get_timeline()
-
 
 
         return device, timeline
@@ -576,7 +591,6 @@ class EvidenceManager:
 
 
         from reports.case_report import CaseExport
-
 
 
         CaseExport.export(

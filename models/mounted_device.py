@@ -9,8 +9,13 @@ class MountedDevice:
     """
 
     drive_letter: str
+
     registry_name: str
+
     volume_guid: str = None
+
+    registry_time: str = "UNKNOWN"
+
 
 
     def to_dict(self):
@@ -20,18 +25,39 @@ class MountedDevice:
         """
 
         return {
-            "drive_letter": self.drive_letter,
-            "registry_name": self.registry_name,
-            "volume_guid": self.volume_guid
+
+            "drive_letter":
+            self.drive_letter,
+
+
+            "registry_name":
+            self.registry_name,
+
+
+            "volume_guid":
+            self.volume_guid,
+
+
+            "registry_time":
+            self.registry_time
+
         }
+
 
 
     def __str__(self):
 
         return (
+
             "\nMOUNTED DEVICE\n"
             "-------------------------\n"
+
             f"Drive Letter : {self.drive_letter}\n"
+
             f"Registry Name: {self.registry_name}\n"
+
             f"Volume GUID  : {self.volume_guid}\n"
+
+            f"Registry Time: {self.registry_time}\n"
+
         )

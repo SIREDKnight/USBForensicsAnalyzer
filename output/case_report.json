@@ -1,9 +1,9 @@
 {
     "case": {
-        "id": 4,
+        "id": 8,
         "name": "Joe",
-        "created_at": "2026-07-08 10:26:12",
-        "investigator": "CASE-20260708-132601"
+        "created_at": "2026-07-08 11:04:57",
+        "investigator": "CASE-20260708-140441"
     },
     "usb_devices": [
         {
@@ -12,7 +12,8 @@
             "revision": "Unknown",
             "serial_number": "6&1526ad36&0&_&0",
             "registry_path": "SYSTEM\\CurrentControlSet\\Enum\\USBSTOR\\Disk&Ven_General&Prod_UDisk&Rev_5.00\\6&1526ad36&0&_&0",
-            "sha256": "9347d6f0822f1538fb17d4a49d8a24638d5ba3c2b78637b96656f12825236b89"
+            "registry_time": "2026-07-02 16:48:44",
+            "sha256": "a74a635467c3a13a8ff5c993951bd2e1ad9746bdf7869f5b0fc26a91b62a7be5"
         }
     ],
     "mounted_devices": [
@@ -20,19 +21,22 @@
             "drive_letter": "C:",
             "registry_name": "\\DosDevices\\C:",
             "volume_guid": null,
-            "sha256": "4e58e51a73cebdb5412fa13549659ecc96d8fc4e9cccc9c309bd486b88e3c1cd"
+            "registry_time": "2026-07-02 16:48:29",
+            "sha256": "516c094b302cb2caf3b9e524615f082896a1010dbcc92ef8996449ca46a74bf4"
         },
         {
             "drive_letter": "D:",
             "registry_name": "\\DosDevices\\D:",
             "volume_guid": null,
-            "sha256": "4bc02de394e6c6e7c80c56a78877c74a404ebbae501d3dd6e350e8771182e967"
+            "registry_time": "2026-07-02 16:48:29",
+            "sha256": "6272a1bd735db73084d5f1c48b12c07f9a7530646d28666dd026f045b2623c7f"
         },
         {
             "drive_letter": "E:",
             "registry_name": "\\DosDevices\\E:",
             "volume_guid": null,
-            "sha256": "c927a8e796d65c89f8548cb4157f6144532ee6f9144d45544f1e98a9e01b63d0"
+            "registry_time": "2026-07-02 16:48:29",
+            "sha256": "05e2358845b8e37ba027daae8af4ef4396d9c6c2d9c5b21ee780436c8d428e55"
         }
     ],
     "timeline": [
@@ -53,6 +57,30 @@
             "artifact": "EVENT_LOG",
             "description": "USB device installation or connection detected",
             "sha256": "1a58794c7b0eb946e277ebb650a9aa82568b32f55ded5593414dfeff248aceee"
+        },
+        {
+            "time": "2026-07-02 16:48:29",
+            "artifact": "MOUNTED_DEVICE",
+            "description": "Drive C: assigned",
+            "sha256": "4145e51e3c5de42ff997472bc5b275ad300d2050e5fe3f6387dcfb615d22d246"
+        },
+        {
+            "time": "2026-07-02 16:48:29",
+            "artifact": "MOUNTED_DEVICE",
+            "description": "Drive D: assigned",
+            "sha256": "ad2e35e26e8bc16fcdabd473fe3f0ad0fb8359d65cb00a87e1dbd789eb5b89f6"
+        },
+        {
+            "time": "2026-07-02 16:48:29",
+            "artifact": "MOUNTED_DEVICE",
+            "description": "Drive E: assigned",
+            "sha256": "558d86616bc1c16123190e2cce2b7f34b8f591bc4dd0cb1c70d66457c774ecea"
+        },
+        {
+            "time": "2026-07-02 16:48:44",
+            "artifact": "REGISTRY",
+            "description": "USB device installed: 6&1526ad36&0&_&0 Serial: 6&1526ad36&0&_&0",
+            "sha256": "55270c2a3e6a0f0455f93a293c9812ca6bd0948e908d3114173d00429f9a80c3"
         },
         {
             "time": "2026-07-02 16:49:58",
@@ -92,7 +120,9 @@
             ],
             "evidence": {
                 "usb_registry_path": "SYSTEM\\CurrentControlSet\\Enum\\USBSTOR\\Disk&Ven_General&Prod_UDisk&Rev_5.00\\6&1526ad36&0&_&0",
+                "usb_registry_time": "2026-07-02 16:48:44",
                 "mounted_registry_name": "\\DosDevices\\C:",
+                "mounted_registry_time": "2026-07-02 16:48:29",
                 "volume_guid": null
             }
         },
@@ -108,7 +138,9 @@
             ],
             "evidence": {
                 "usb_registry_path": "SYSTEM\\CurrentControlSet\\Enum\\USBSTOR\\Disk&Ven_General&Prod_UDisk&Rev_5.00\\6&1526ad36&0&_&0",
+                "usb_registry_time": "2026-07-02 16:48:44",
                 "mounted_registry_name": "\\DosDevices\\D:",
+                "mounted_registry_time": "2026-07-02 16:48:29",
                 "volume_guid": null
             }
         },
@@ -124,7 +156,9 @@
             ],
             "evidence": {
                 "usb_registry_path": "SYSTEM\\CurrentControlSet\\Enum\\USBSTOR\\Disk&Ven_General&Prod_UDisk&Rev_5.00\\6&1526ad36&0&_&0",
+                "usb_registry_time": "2026-07-02 16:48:44",
                 "mounted_registry_name": "\\DosDevices\\E:",
+                "mounted_registry_time": "2026-07-02 16:48:29",
                 "volume_guid": null
             }
         }
@@ -132,7 +166,7 @@
     "summary": {
         "usb_devices": 1,
         "mounted_devices": 3,
-        "timeline_events": 7,
+        "timeline_events": 11,
         "correlations": 3
     }
 }

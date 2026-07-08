@@ -37,23 +37,15 @@ class PDFReport:
         )
 
         canvas.drawString(
-
             40,
-
             25,
-
             "USB Forensics Analyzer - DFIR Investigation Report"
-
         )
 
         canvas.drawRightString(
-
             550,
-
             25,
-
             f"Page {doc.page}"
-
         )
 
         canvas.restoreState()
@@ -99,7 +91,7 @@ class PDFReport:
 
 
         # ==================================================
-        # CUSTOM STYLES
+        # COVER PAGE
         # ==================================================
 
         cover_title = ParagraphStyle(
@@ -110,9 +102,7 @@ class PDFReport:
 
             alignment=TA_CENTER,
 
-            fontSize=24,
-
-            spaceAfter=30
+            fontSize=24
 
         )
 
@@ -134,19 +124,9 @@ class PDFReport:
 
 
 
-        # ==================================================
-        # COVER PAGE
-        # ==================================================
-
         elements.append(
 
-            Spacer(
-
-                1,
-
-                100
-
-            )
+            Spacer(1,100)
 
         )
 
@@ -179,85 +159,7 @@ class PDFReport:
 
         elements.append(
 
-            Spacer(
-
-                1,
-
-                40
-
-            )
-
-        )
-
-
-
-        case_id = case["case_id"]
-
-        case_name = case["case_name"]
-
-        investigator = case["investigator"]
-
-        created = case["created_at"]
-
-
-
-        cover_information = f"""
-
-        <b>Case ID:</b><br/>
-
-        {case_id}
-
-        <br/><br/>
-
-        <b>Case Name:</b><br/>
-
-        {case_name}
-
-        <br/><br/>
-
-        <b>Investigator:</b><br/>
-
-        {investigator}
-
-        <br/><br/>
-
-        <b>Generated:</b><br/>
-
-        {created}
-
-        <br/><br/><br/>
-
-        <b>Forensic Analysis of USB Device Usage on Windows Systems
-
-        Using Automated Artifact Collection</b>
-
-        """
-
-
-
-        elements.append(
-
-            Paragraph(
-
-                cover_information,
-
-                cover_text
-
-            )
-
-        )
-
-
-
-        elements.append(
-
-            Spacer(
-
-                1,
-
-                100
-
-            )
+            Spacer(1,40)
 
         )
 
@@ -267,128 +169,48 @@ class PDFReport:
 
             Paragraph(
 
-                "CONFIDENTIAL FORENSIC DOCUMENT",
+                f"""
+
+                <b>Case ID:</b><br/>
+
+                {case['case_id']}
+
+                <br/><br/>
+
+                <b>Case Name:</b><br/>
+
+                {case['case_name']}
+
+                <br/><br/>
+
+                <b>Investigator:</b><br/>
+
+                {case['investigator']}
+
+                <br/><br/>
+
+                <b>Generated:</b><br/>
+
+                {case['created_at']}
+
+                <br/><br/><br/>
+
+                Forensic Analysis of USB Device Usage on Windows Systems
+
+                Using Automated Artifact Collection
+
+                """,
 
                 cover_text
 
             )
 
         )
-
 
 
         elements.append(
 
             PageBreak()
-
-        )
-
-
-
-        # ==================================================
-        # CASE INFORMATION
-        # ==================================================
-
-        elements.append(
-
-            Paragraph(
-
-                "CASE INFORMATION",
-
-                styles["Heading1"]
-
-            )
-
-        )
-
-
-
-        case_table = Table([
-
-            [
-
-                "Case ID",
-
-                case_id
-
-            ],
-
-            [
-
-                "Case Name",
-
-                case_name
-
-            ],
-
-            [
-
-                "Investigator",
-
-                investigator
-
-            ],
-
-            [
-
-                "Created",
-
-                created
-
-            ]
-
-        ])
-
-
-
-        case_table.setStyle(
-
-            TableStyle([
-
-                (
-
-                    "GRID",
-
-                    (0,0),
-
-                    (-1,-1),
-
-                    1,
-
-                    colors.black
-
-                ),
-
-                (
-
-                    "BACKGROUND",
-
-                    (0,0),
-
-                    (0,-1),
-
-                    colors.lightgrey
-
-                )
-
-            ])
-
-        )
-
-
-
-        elements.append(case_table)
-
-
-        elements.append(
-
-            Spacer(
-
-                1,
-
-                20
-
-            )
 
         )
 
@@ -411,91 +233,43 @@ class PDFReport:
         )
 
 
+        summary = Table([
 
-        summary_table = Table([
+            ["Artifact","Count"],
 
-            [
+            ["USB Devices",len(devices)],
 
-                "Artifact",
+            ["Mounted Devices",len(mounted)],
 
-                "Count"
+            ["Timeline Events",len(timeline)],
 
-            ],
-
-            [
-
-                "USB Devices",
-
-                len(devices)
-
-            ],
-
-            [
-
-                "Mounted Devices",
-
-                len(mounted)
-
-            ],
-
-            [
-
-                "Timeline Events",
-
-                len(timeline)
-
-            ],
-
-            [
-
-                "Correlations",
-
-                len(correlations)
-
-            ]
+            ["Correlations",len(correlations)]
 
         ])
 
 
 
-        summary_table.setStyle(
+        summary.setStyle(
 
             TableStyle([
 
-                (
-
-                    "GRID",
-
-                    (0,0),
-
-                    (-1,-1),
-
-                    1,
-
-                    colors.black
-
-                )
+                ("GRID",(0,0),(-1,-1),1,colors.black)
 
             ])
 
         )
 
 
-
-        elements.append(summary_table)
-
+        elements.append(summary)
 
 
-        elements.append(
 
-            PageBreak()
-
-        )
+        elements.append(PageBreak())
 
 
 
         # ==================================================
-        # USB DEVICES
+        # USB ARTIFACTS
         # ==================================================
 
         elements.append(
@@ -517,79 +291,34 @@ class PDFReport:
 
             table = Table([
 
-                [
+                ["Manufacturer",device.manufacturer],
 
-                    "Manufacturer",
+                ["Product",device.product],
 
-                    device.manufacturer
+                ["Revision",device.revision],
 
-                ],
+                ["Serial Number",device.serial_number],
 
-                [
+                ["Registry Path",device.registry_path],
 
-                    "Product",
-
-                    device.product
-
-                ],
-
-                [
-
-                    "Revision",
-
-                    device.revision
-
-                ],
-
-                [
-
-                    "Serial Number",
-
-                    device.serial_number
-
-                ],
-
-                [
-
-                    "Registry Path",
-
-                    device.registry_path
-
-                ],
+                ["Registry Time",device.registry_time],
 
                 [
 
                     "SHA-256",
 
-                    HashUtils.sha256(
-
-                        device.__dict__
-
-                    )
+                    HashUtils.sha256(device.__dict__)
 
                 ]
 
             ])
 
 
-
             table.setStyle(
 
                 TableStyle([
 
-                    (
-
-                        "GRID",
-
-                        (0,0),
-
-                        (-1,-1),
-
-                        1,
-
-                        colors.black
-
-                    )
+                    ("GRID",(0,0),(-1,-1),1,colors.black)
 
                 ])
 
@@ -600,13 +329,7 @@ class PDFReport:
 
             elements.append(
 
-                Spacer(
-
-                    1,
-
-                    15
-
-                )
+                Spacer(1,20)
 
             )
 
@@ -635,39 +358,19 @@ class PDFReport:
 
             table = Table([
 
-                [
+                ["Drive Letter",mount.drive_letter],
 
-                    "Drive Letter",
+                ["Registry Name",mount.registry_name],
 
-                    mount.drive_letter
+                ["Volume GUID",mount.volume_guid],
 
-                ],
-
-                [
-
-                    "Registry Name",
-
-                    mount.registry_name
-
-                ],
-
-                [
-
-                    "Volume GUID",
-
-                    mount.volume_guid
-
-                ],
+                ["Registry Time",mount.registry_time],
 
                 [
 
                     "SHA-256",
 
-                    HashUtils.sha256(
-
-                        mount.__dict__
-
-                    )
+                    HashUtils.sha256(mount.__dict__)
 
                 ]
 
@@ -679,19 +382,7 @@ class PDFReport:
 
                 TableStyle([
 
-                    (
-
-                        "GRID",
-
-                        (0,0),
-
-                        (-1,-1),
-
-                        1,
-
-                        colors.black
-
-                    )
+                    ("GRID",(0,0),(-1,-1),1,colors.black)
 
                 ])
 
@@ -700,19 +391,21 @@ class PDFReport:
 
             elements.append(table)
 
+            elements.append(
+
+                Spacer(1,20)
+
+            )
+
+
+
+        elements.append(PageBreak())
+
 
 
         # ==================================================
-        # TIMELINE
+        # FORENSIC TIMELINE
         # ==================================================
-
-        elements.append(
-
-            PageBreak()
-
-        )
-
-
 
         elements.append(
 
@@ -766,29 +459,15 @@ class PDFReport:
         )
 
 
-
         timeline_table.setStyle(
 
             TableStyle([
 
-                (
-
-                    "GRID",
-
-                    (0,0),
-
-                    (-1,-1),
-
-                    1,
-
-                    colors.black
-
-                )
+                ("GRID",(0,0),(-1,-1),1,colors.black)
 
             ])
 
         )
-
 
 
         elements.append(timeline_table)
@@ -796,22 +475,8 @@ class PDFReport:
 
 
         # ==================================================
-        # CORRELATION
+        # CORRELATIONS
         # ==================================================
-
-        elements.append(
-
-            Spacer(
-
-                1,
-
-                20
-
-            )
-
-        )
-
-
 
         elements.append(
 
@@ -836,11 +501,11 @@ class PDFReport:
 
                     f"""
 
-                    Device: {item['product']}<br/>
+                    <b>Device:</b> {item['product']}<br/>
 
-                    Drive: {item['drive_letter']}<br/>
+                    <b>Drive:</b> {item['drive_letter']}<br/>
 
-                    Confidence Score: {item['confidence']}%
+                    <b>Confidence:</b> {item['confidence']}%
 
                     """,
 
@@ -851,14 +516,35 @@ class PDFReport:
             )
 
 
-            for reason in item["reasons"]:
+
+            elements.append(
+
+                Paragraph(
+
+                    "Supporting Evidence:",
+
+                    styles["Normal"]
+
+                )
+
+            )
+
+
+
+            for key,value in item.get(
+
+                "evidence",
+
+                {}
+
+            ).items():
 
 
                 elements.append(
 
                     Paragraph(
 
-                        f"- {reason}",
+                        f"{key}: {value}",
 
                         styles["Normal"]
 
@@ -867,15 +553,10 @@ class PDFReport:
                 )
 
 
+
             elements.append(
 
-                Spacer(
-
-                    1,
-
-                    10
-
-                )
+                Spacer(1,15)
 
             )
 
@@ -885,12 +566,7 @@ class PDFReport:
         # CONCLUSION
         # ==================================================
 
-        elements.append(
-
-            PageBreak()
-
-        )
-
+        elements.append(PageBreak())
 
 
         elements.append(
@@ -909,41 +585,35 @@ class PDFReport:
 
         conclusion = """
 
-        This forensic investigation was conducted using the USB
+        This investigation was performed using the USB Forensics Analyzer
 
-        Forensics Analyzer automated evidence collection framework.
-
-
-
-        The system collected and analyzed Windows USB-related
-
-        artifacts including Registry information, mounted device
-
-        records, and Windows Event Log entries.
+        automated evidence collection framework.
 
 
 
-        Collected artifacts were correlated to identify possible
+        The system collected Windows USB-related artifacts from registry
 
-        relationships between detected USB devices and mounted
-
-        storage volumes.
+        locations, mounted device records, and Windows Event Logs.
 
 
 
-        SHA-256 hashing was applied to collected evidence records
+        Registry timestamps, mounted device timestamps, and event log
 
-        to support integrity verification and demonstrate that
+        timestamps were combined to reconstruct a chronological timeline
 
-        evidence records can be validated after acquisition.
+        of USB device activity.
 
 
 
-        The findings contained in this report represent the results
+        SHA-256 hashing was applied to collected artifacts to support
 
-        of automated artifact collection and correlation performed
+        evidence integrity verification.
 
-        during this investigation.
+
+
+        The findings represent the results of automated forensic artifact
+
+        collection and correlation performed during this investigation.
 
         """
 

@@ -40,7 +40,6 @@ class CaseReport:
 
             report["case"] = {
 
-
                 "id":
                 case["id"],
 
@@ -79,28 +78,38 @@ class CaseReport:
 
             report["usb_devices"].append({
 
-
                 "manufacturer":
+
                 device.manufacturer,
 
 
                 "product":
+
                 device.product,
 
 
                 "revision":
+
                 device.revision,
 
 
                 "serial_number":
+
                 device.serial_number,
 
 
                 "registry_path":
+
                 device.registry_path,
 
 
+                "registry_time":
+
+                device.registry_time,
+
+
                 "sha256":
+
                 HashUtils.sha256(
 
                     device.__dict__
@@ -124,20 +133,28 @@ class CaseReport:
 
             report["mounted_devices"].append({
 
-
                 "drive_letter":
+
                 mount.drive_letter,
 
 
                 "registry_name":
+
                 mount.registry_name,
 
 
                 "volume_guid":
+
                 mount.volume_guid,
 
 
+                "registry_time":
+
+                mount.registry_time,
+
+
                 "sha256":
+
                 HashUtils.sha256(
 
                     mount.__dict__
@@ -161,20 +178,23 @@ class CaseReport:
 
             report["timeline"].append({
 
-
                 "time":
+
                 event["time"],
 
 
                 "artifact":
+
                 event["artifact"],
 
 
                 "description":
+
                 event["description"],
 
 
                 "sha256":
+
                 HashUtils.sha256(
 
                     event
@@ -201,27 +221,30 @@ class CaseReport:
 
 
             "usb_devices":
+
             len(devices),
 
 
             "mounted_devices":
+
             len(mounted),
 
 
             "timeline_events":
+
             len(timeline),
 
 
             "correlations":
-            len(correlations)
 
+            len(correlations)
 
         }
 
 
 
         # ==================================================
-        # SAVE JSON REPORT
+        # SAVE REPORT
         # ==================================================
 
         CaseReport.OUTPUT_FILE.parent.mkdir(
@@ -307,17 +330,14 @@ class CaseExport:
             "case_report.pdf",
 
 
-
             CaseExport.OUTPUT_DIR /
 
             "case_report.json",
 
 
-
             CaseExport.OUTPUT_DIR /
 
             "usb_devices.json",
-
 
 
             Path("database") /
@@ -338,7 +358,6 @@ class CaseExport:
             zipfile.ZIP_DEFLATED
 
         ) as archive:
-
 
 
             for file in files:
