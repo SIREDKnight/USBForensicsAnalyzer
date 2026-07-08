@@ -1,9 +1,9 @@
 {
     "case": {
-        "id": 1,
-        "name": "USB Investigation Case 001",
-        "created_at": "2026-07-07 12:25:35",
-        "investigator": "Analyst"
+        "id": 2,
+        "name": "test run 2",
+        "created_at": "2026-07-08 08:59:19",
+        "investigator": "Joe"
     },
     "usb_devices": [
         {

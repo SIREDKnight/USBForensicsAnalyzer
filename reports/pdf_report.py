@@ -1,52 +1,289 @@
 from pathlib import Path
 
+from reportlab.lib.pagesizes import A4
 from reportlab.lib import colors
-from reportlab.lib.styles import getSampleStyleSheet
+
 from reportlab.platypus import (
     SimpleDocTemplate,
     Paragraph,
     Spacer,
     Table,
-    TableStyle
+    TableStyle,
+    PageBreak
 )
+
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib.enums import TA_CENTER
 
 from utils.hash_utils import HashUtils
 
 
+
 class PDFReport:
+
 
     OUTPUT_FILE = Path("output") / "case_report.pdf"
 
+
+
+    @staticmethod
+    def add_footer(canvas, doc):
+
+        canvas.saveState()
+
+        canvas.setFont(
+            "Helvetica",
+            8
+        )
+
+        canvas.drawString(
+
+            40,
+
+            25,
+
+            "USB Forensics Analyzer - DFIR Investigation Report"
+
+        )
+
+        canvas.drawRightString(
+
+            550,
+
+            25,
+
+            f"Page {doc.page}"
+
+        )
+
+        canvas.restoreState()
+
+
+
     @staticmethod
     def generate(
+
             case,
+
             devices,
+
             mounted,
+
             correlations,
+
             timeline):
 
-        doc = SimpleDocTemplate(
-            str(PDFReport.OUTPUT_FILE)
+
+        PDFReport.OUTPUT_FILE.parent.mkdir(
+
+            exist_ok=True
+
         )
+
+
+
+        document = SimpleDocTemplate(
+
+            str(PDFReport.OUTPUT_FILE),
+
+            pagesize=A4
+
+        )
+
+
 
         styles = getSampleStyleSheet()
 
         elements = []
 
+
+
         # ==================================================
-        # TITLE
+        # CUSTOM STYLES
+        # ==================================================
+
+        cover_title = ParagraphStyle(
+
+            "CoverTitle",
+
+            parent=styles["Title"],
+
+            alignment=TA_CENTER,
+
+            fontSize=24,
+
+            spaceAfter=30
+
+        )
+
+
+
+        cover_text = ParagraphStyle(
+
+            "CoverText",
+
+            parent=styles["Normal"],
+
+            alignment=TA_CENTER,
+
+            fontSize=12,
+
+            leading=18
+
+        )
+
+
+
+        # ==================================================
+        # COVER PAGE
         # ==================================================
 
         elements.append(
 
-            Paragraph(
-                "USB FORENSICS CASE REPORT",
-                styles["Title"]
+            Spacer(
+
+                1,
+
+                100
+
             )
 
         )
 
-        elements.append(Spacer(1, 20))
+
+        elements.append(
+
+            Paragraph(
+
+                "USB FORENSICS ANALYZER",
+
+                cover_title
+
+            )
+
+        )
+
+
+        elements.append(
+
+            Paragraph(
+
+                "FORENSIC INVESTIGATION REPORT",
+
+                cover_title
+
+            )
+
+        )
+
+
+        elements.append(
+
+            Spacer(
+
+                1,
+
+                40
+
+            )
+
+        )
+
+
+
+        case_id = case["case_id"]
+
+        case_name = case["case_name"]
+
+        investigator = case["investigator"]
+
+        created = case["created_at"]
+
+
+
+        cover_information = f"""
+
+        <b>Case ID:</b><br/>
+
+        {case_id}
+
+        <br/><br/>
+
+        <b>Case Name:</b><br/>
+
+        {case_name}
+
+        <br/><br/>
+
+        <b>Investigator:</b><br/>
+
+        {investigator}
+
+        <br/><br/>
+
+        <b>Generated:</b><br/>
+
+        {created}
+
+        <br/><br/><br/>
+
+        <b>Forensic Analysis of USB Device Usage on Windows Systems
+
+        Using Automated Artifact Collection</b>
+
+        """
+
+
+
+        elements.append(
+
+            Paragraph(
+
+                cover_information,
+
+                cover_text
+
+            )
+
+        )
+
+
+
+        elements.append(
+
+            Spacer(
+
+                1,
+
+                100
+
+            )
+
+        )
+
+
+
+        elements.append(
+
+            Paragraph(
+
+                "CONFIDENTIAL FORENSIC DOCUMENT",
+
+                cover_text
+
+            )
+
+        )
+
+
+
+        elements.append(
+
+            PageBreak()
+
+        )
+
+
 
         # ==================================================
         # CASE INFORMATION
@@ -55,34 +292,107 @@ class PDFReport:
         elements.append(
 
             Paragraph(
+
                 "CASE INFORMATION",
+
                 styles["Heading1"]
+
             )
 
         )
 
+
+
         case_table = Table([
 
-            ["Case ID", case[0]],
-            ["Case Name", case[1]],
-            ["Created", case[2]],
-            ["Investigator", case[3]]
+            [
+
+                "Case ID",
+
+                case_id
+
+            ],
+
+            [
+
+                "Case Name",
+
+                case_name
+
+            ],
+
+            [
+
+                "Investigator",
+
+                investigator
+
+            ],
+
+            [
+
+                "Created",
+
+                created
+
+            ]
 
         ])
 
-        case_table.setStyle(TableStyle([
 
-            ("GRID", (0, 0), (-1, -1), 1, colors.black),
 
-            ("BACKGROUND", (0, 0), (0, -1), colors.lightgrey),
+        case_table.setStyle(
 
-            ("BOTTOMPADDING", (0, 0), (-1, -1), 6)
+            TableStyle([
 
-        ]))
+                (
+
+                    "GRID",
+
+                    (0,0),
+
+                    (-1,-1),
+
+                    1,
+
+                    colors.black
+
+                ),
+
+                (
+
+                    "BACKGROUND",
+
+                    (0,0),
+
+                    (0,-1),
+
+                    colors.lightgrey
+
+                )
+
+            ])
+
+        )
+
+
 
         elements.append(case_table)
 
-        elements.append(Spacer(1, 20))
+
+        elements.append(
+
+            Spacer(
+
+                1,
+
+                20
+
+            )
+
+        )
+
+
 
         # ==================================================
         # EVIDENCE SUMMARY
@@ -91,41 +401,98 @@ class PDFReport:
         elements.append(
 
             Paragraph(
+
                 "EVIDENCE SUMMARY",
+
                 styles["Heading1"]
+
             )
 
         )
 
-        summary = Table([
 
-            ["Evidence Type", "Count"],
 
-            ["USB Devices", len(devices)],
+        summary_table = Table([
 
-            ["Mounted Devices", len(mounted)],
+            [
 
-            ["Timeline Events", len(timeline)],
+                "Artifact",
 
-            ["Correlations", len(correlations)]
+                "Count"
+
+            ],
+
+            [
+
+                "USB Devices",
+
+                len(devices)
+
+            ],
+
+            [
+
+                "Mounted Devices",
+
+                len(mounted)
+
+            ],
+
+            [
+
+                "Timeline Events",
+
+                len(timeline)
+
+            ],
+
+            [
+
+                "Correlations",
+
+                len(correlations)
+
+            ]
 
         ])
 
-        summary.setStyle(TableStyle([
 
-            ("GRID", (0, 0), (-1, -1), 1, colors.black),
 
-            ("BACKGROUND", (0, 0), (-1, 0), colors.grey),
+        summary_table.setStyle(
 
-            ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
+            TableStyle([
 
-            ("ALIGN", (1, 1), (-1, -1), "CENTER")
+                (
 
-        ]))
+                    "GRID",
 
-        elements.append(summary)
+                    (0,0),
 
-        elements.append(Spacer(1, 20))
+                    (-1,-1),
+
+                    1,
+
+                    colors.black
+
+                )
+
+            ])
+
+        )
+
+
+
+        elements.append(summary_table)
+
+
+
+        elements.append(
+
+            PageBreak()
+
+        )
+
+
 
         # ==================================================
         # USB DEVICES
@@ -134,87 +501,116 @@ class PDFReport:
         elements.append(
 
             Paragraph(
-                "USB DEVICE DETAILS",
+
+                "USB DEVICE ARTIFACTS",
+
                 styles["Heading1"]
+
             )
 
         )
 
+
+
         for device in devices:
 
+
+            table = Table([
+
+                [
+
+                    "Manufacturer",
+
+                    device.manufacturer
+
+                ],
+
+                [
+
+                    "Product",
+
+                    device.product
+
+                ],
+
+                [
+
+                    "Revision",
+
+                    device.revision
+
+                ],
+
+                [
+
+                    "Serial Number",
+
+                    device.serial_number
+
+                ],
+
+                [
+
+                    "Registry Path",
+
+                    device.registry_path
+
+                ],
+
+                [
+
+                    "SHA-256",
+
+                    HashUtils.sha256(
+
+                        device.__dict__
+
+                    )
+
+                ]
+
+            ])
+
+
+
+            table.setStyle(
+
+                TableStyle([
+
+                    (
+
+                        "GRID",
+
+                        (0,0),
+
+                        (-1,-1),
+
+                        1,
+
+                        colors.black
+
+                    )
+
+                ])
+
+            )
+
+
+            elements.append(table)
+
             elements.append(
 
-                Paragraph(
+                Spacer(
 
-                    f"<b>Manufacturer:</b> {device.manufacturer}",
+                    1,
 
-                    styles["Normal"]
+                    15
 
                 )
 
             )
 
-            elements.append(
 
-                Paragraph(
-
-                    f"<b>Product:</b> {device.product}",
-
-                    styles["Normal"]
-
-                )
-
-            )
-
-            elements.append(
-
-                Paragraph(
-
-                    f"<b>Revision:</b> {device.revision}",
-
-                    styles["Normal"]
-
-                )
-
-            )
-
-            elements.append(
-
-                Paragraph(
-
-                    f"<b>Serial Number:</b> {device.serial_number}",
-
-                    styles["Normal"]
-
-                )
-
-            )
-
-            elements.append(
-
-                Paragraph(
-
-                    f"<b>Registry Path:</b> {device.registry_path}",
-
-                    styles["Normal"]
-
-                )
-
-            )
-
-            elements.append(
-
-                Paragraph(
-
-                    f"<b>SHA-256:</b> {HashUtils.sha256(device.to_dict())}",
-
-                    styles["Code"]
-
-                )
-
-            )
-
-            elements.append(Spacer(1, 15))
 
         # ==================================================
         # MOUNTED DEVICES
@@ -224,7 +620,7 @@ class PDFReport:
 
             Paragraph(
 
-                "MOUNTED DEVICE DETAILS",
+                "MOUNTED DEVICE ARTIFACTS",
 
                 styles["Heading1"]
 
@@ -232,61 +628,91 @@ class PDFReport:
 
         )
 
+
+
         for mount in mounted:
 
-            elements.append(
 
-                Paragraph(
+            table = Table([
 
-                    f"<b>Drive Letter:</b> {mount.drive_letter}",
+                [
 
-                    styles["Normal"]
+                    "Drive Letter",
 
-                )
+                    mount.drive_letter
+
+                ],
+
+                [
+
+                    "Registry Name",
+
+                    mount.registry_name
+
+                ],
+
+                [
+
+                    "Volume GUID",
+
+                    mount.volume_guid
+
+                ],
+
+                [
+
+                    "SHA-256",
+
+                    HashUtils.sha256(
+
+                        mount.__dict__
+
+                    )
+
+                ]
+
+            ])
+
+
+
+            table.setStyle(
+
+                TableStyle([
+
+                    (
+
+                        "GRID",
+
+                        (0,0),
+
+                        (-1,-1),
+
+                        1,
+
+                        colors.black
+
+                    )
+
+                ])
 
             )
 
-            elements.append(
 
-                Paragraph(
+            elements.append(table)
 
-                    f"<b>Registry Name:</b> {mount.registry_name}",
 
-                    styles["Normal"]
-
-                )
-
-            )
-
-            elements.append(
-
-                Paragraph(
-
-                    f"<b>Volume GUID:</b> {mount.volume_guid}",
-
-                    styles["Normal"]
-
-                )
-
-            )
-
-            elements.append(
-
-                Paragraph(
-
-                    f"<b>SHA-256:</b> {HashUtils.sha256(mount.to_dict())}",
-
-                    styles["Code"]
-
-                )
-
-            )
-
-            elements.append(Spacer(1, 15))
 
         # ==================================================
         # TIMELINE
         # ==================================================
+
+        elements.append(
+
+            PageBreak()
+
+        )
+
+
 
         elements.append(
 
@@ -300,11 +726,28 @@ class PDFReport:
 
         )
 
-        timeline_table = [["Time", "Artifact", "Description"]]
+
+
+        timeline_data = [
+
+            [
+
+                "Time",
+
+                "Artifact",
+
+                "Description"
+
+            ]
+
+        ]
+
+
 
         for event in timeline:
 
-            timeline_table.append([
+
+            timeline_data.append([
 
                 event["time"],
 
@@ -314,27 +757,61 @@ class PDFReport:
 
             ])
 
-        table = Table(timeline_table)
 
-        table.setStyle(TableStyle([
 
-            ("GRID", (0, 0), (-1, -1), 1, colors.black),
+        timeline_table = Table(
 
-            ("BACKGROUND", (0, 0), (-1, 0), colors.grey),
+            timeline_data
 
-            ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
+        )
 
-            ("BOTTOMPADDING", (0, 0), (-1, 0), 6)
 
-        ]))
 
-        elements.append(table)
+        timeline_table.setStyle(
 
-        elements.append(Spacer(1, 20))
+            TableStyle([
+
+                (
+
+                    "GRID",
+
+                    (0,0),
+
+                    (-1,-1),
+
+                    1,
+
+                    colors.black
+
+                )
+
+            ])
+
+        )
+
+
+
+        elements.append(timeline_table)
+
+
 
         # ==================================================
-        # CORRELATION ANALYSIS
+        # CORRELATION
         # ==================================================
+
+        elements.append(
+
+            Spacer(
+
+                1,
+
+                20
+
+            )
+
+        )
+
+
 
         elements.append(
 
@@ -348,13 +825,24 @@ class PDFReport:
 
         )
 
-        for c in correlations:
+
+
+        for item in correlations:
+
 
             elements.append(
 
                 Paragraph(
 
-                    f"<b>Device:</b> {c['product']}",
+                    f"""
+
+                    Device: {item['product']}<br/>
+
+                    Drive: {item['drive_letter']}<br/>
+
+                    Confidence Score: {item['confidence']}%
+
+                    """,
 
                     styles["Normal"]
 
@@ -362,61 +850,15 @@ class PDFReport:
 
             )
 
-            elements.append(
 
-                Paragraph(
+            for reason in item["reasons"]:
 
-                    f"<b>Manufacturer:</b> {c['manufacturer']}",
-
-                    styles["Normal"]
-
-                )
-
-            )
-
-            elements.append(
-
-                Paragraph(
-
-                    f"<b>Drive Letter:</b> {c['drive_letter']}",
-
-                    styles["Normal"]
-
-                )
-
-            )
-
-            elements.append(
-
-                Paragraph(
-
-                    f"<b>Confidence:</b> {c['confidence']}%",
-
-                    styles["Normal"]
-
-                )
-
-            )
-
-            elements.append(
-
-                Paragraph(
-
-                    "<b>Supporting Evidence</b>",
-
-                    styles["Heading3"]
-
-                )
-
-            )
-
-            for reason in c["reasons"]:
 
                 elements.append(
 
                     Paragraph(
 
-                        f"• {reason}",
+                        f"- {reason}",
 
                         styles["Normal"]
 
@@ -424,7 +866,20 @@ class PDFReport:
 
                 )
 
-            elements.append(Spacer(1, 15))
+
+            elements.append(
+
+                Spacer(
+
+                    1,
+
+                    10
+
+                )
+
+            )
+
+
 
         # ==================================================
         # CONCLUSION
@@ -432,9 +887,17 @@ class PDFReport:
 
         elements.append(
 
+            PageBreak()
+
+        )
+
+
+
+        elements.append(
+
             Paragraph(
 
-                "CONCLUSION",
+                "FORENSIC CONCLUSION",
 
                 styles["Heading1"]
 
@@ -442,18 +905,49 @@ class PDFReport:
 
         )
 
+
+
         conclusion = """
-        This report summarizes USB device activity identified on the
-        examined Windows system. Evidence was acquired from Registry
-        artifacts, MountedDevices entries, and Windows Event Logs.
 
-        Correlation analysis was performed using weighted evidence
-        scoring, and all collected artifacts were verified using
-        SHA-256 hashing to preserve forensic integrity.
+        This forensic investigation was conducted using the USB
 
-        This report was generated automatically by the
-        USB Forensics Analyzer.
+        Forensics Analyzer automated evidence collection framework.
+
+
+
+        The system collected and analyzed Windows USB-related
+
+        artifacts including Registry information, mounted device
+
+        records, and Windows Event Log entries.
+
+
+
+        Collected artifacts were correlated to identify possible
+
+        relationships between detected USB devices and mounted
+
+        storage volumes.
+
+
+
+        SHA-256 hashing was applied to collected evidence records
+
+        to support integrity verification and demonstrate that
+
+        evidence records can be validated after acquisition.
+
+
+
+        The findings contained in this report represent the results
+
+        of automated artifact collection and correlation performed
+
+        during this investigation.
+
         """
+
+
 
         elements.append(
 
@@ -467,7 +961,19 @@ class PDFReport:
 
         )
 
-        doc.build(elements)
+
+
+        document.build(
+
+            elements,
+
+            onFirstPage=PDFReport.add_footer,
+
+            onLaterPages=PDFReport.add_footer
+
+        )
+
+
 
         print(
 

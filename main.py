@@ -8,23 +8,38 @@ from manager.evidence_manager import EvidenceManager
 def banner():
 
     print("=" * 70)
-    print("USB FORENSICS ANALYZER - DFIR EDITION")
+
+    print("        USB FORENSICS ANALYZER - DFIR EDITION")
+
     print("=" * 70)
 
 
 
 def menu():
 
-    print("\nFORENSIC MENU")
+    print()
+
     print("=" * 70)
 
-    print("1. Run full acquisition")
-    print("2. View PDF report")
-    print("3. Query device by serial")
-    print("4. View timeline")
-    print("5. View correlations")
-    print("6. Export case bundle")
-    print("7. Exit")
+    print("FORENSIC MENU")
+
+    print("=" * 70)
+
+    print("[1] Run Full Acquisition")
+
+    print("[2] Open PDF Report")
+
+    print("[3] Query Device By Serial Number")
+
+    print("[4] View Timeline")
+
+    print("[5] View Correlations")
+
+    print("[6] Export Case Bundle")
+
+    print("[7] Exit")
+
+    print("=" * 70)
 
 
 
@@ -56,65 +71,77 @@ def main():
 
 
 
-        # ==========================================
-        # FULL ACQUISITION
-        # ==========================================
+        # ==================================================
+        # ACQUISITION
+        # ==================================================
 
         if choice == "1":
 
 
-            (
-
-                devices,
-
-                mounted,
-
-                correlations,
-
-                timeline
-
-            ) = manager.collect()
+            try:
 
 
+                (
 
-            print(
+                    devices,
 
-                "\n[+] Acquisition completed successfully"
+                    mounted,
 
-            )
+                    correlations,
 
+                    timeline
 
-            print(
-
-                f"Devices     : {len(devices)}"
-
-            )
-
-
-            print(
-
-                f"Mounted     : {len(mounted)}"
-
-            )
-
-
-            print(
-
-                f"Correlations: {len(correlations)}"
-
-            )
+                ) = manager.collect()
 
 
 
+                print()
 
-        # ==========================================
+                print("=" * 70)
+
+                print("ACQUISITION COMPLETED")
+
+                print("=" * 70)
+
+                print(
+                    f"USB Devices      : {len(devices)}"
+                )
+
+                print(
+                    f"Mounted Devices  : {len(mounted)}"
+                )
+
+                print(
+                    f"Timeline Events  : {len(timeline)}"
+                )
+
+                print(
+                    f"Correlations     : {len(correlations)}"
+                )
+
+                print("=" * 70)
+
+
+
+            except Exception as error:
+
+
+                print()
+
+                print("[ERROR] Acquisition failed")
+
+                print(error)
+
+
+
+        # ==================================================
         # PDF REPORT
-        # ==========================================
+        # ==================================================
 
         elif choice == "2":
 
 
-            report_path = Path(
+            report = Path(
 
                 "output"
 
@@ -122,7 +149,7 @@ def main():
 
 
 
-            if report_path.exists():
+            if report.exists():
 
 
                 print(
@@ -134,7 +161,7 @@ def main():
 
                 os.startfile(
 
-                    report_path
+                    report
 
                 )
 
@@ -144,26 +171,24 @@ def main():
 
                 print(
 
-                    "\n[-] No report found. Run acquisition first."
+                    "\n[-] Report not found. Run acquisition first."
 
                 )
 
 
 
-
-        # ==========================================
+        # ==================================================
         # DEVICE QUERY
-        # ==========================================
+        # ==================================================
 
         elif choice == "3":
 
 
             serial = input(
 
-                "Enter serial number: "
+                "\nEnter serial number: "
 
             )
-
 
 
             device, device_timeline = manager.query_device(
@@ -173,23 +198,28 @@ def main():
             )
 
 
-
             if device:
 
 
-                print("\nDEVICE DETAILS")
+                print()
+
+                print("=" * 70)
+
+                print("DEVICE INFORMATION")
 
                 print("=" * 70)
 
 
                 print(
 
-                    device
+                    dict(device)
 
                 )
 
 
-                print("\nTIMELINE")
+                print()
+
+                print("TIMELINE")
 
                 print("=" * 70)
 
@@ -198,7 +228,11 @@ def main():
                 for event in device_timeline:
 
 
-                    print(event)
+                    print(
+
+                        event
+
+                    )
 
 
 
@@ -207,21 +241,24 @@ def main():
 
                 print(
 
-                    "Device not found."
+                    "\n[-] Device not found."
 
                 )
 
 
 
-
-        # ==========================================
-        # TIMELINE VIEW
-        # ==========================================
+        # ==================================================
+        # TIMELINE
+        # ==================================================
 
         elif choice == "4":
 
 
-            print("\nFORENSIC TIMELINE")
+            print()
+
+            print("=" * 70)
+
+            print("FORENSIC TIMELINE")
 
             print("=" * 70)
 
@@ -236,7 +273,9 @@ def main():
                     print(
 
                         f"{event['time']} | "
+
                         f"{event['artifact']} | "
+
                         f"{event['description']}"
 
                     )
@@ -253,15 +292,18 @@ def main():
 
 
 
-
-        # ==========================================
-        # CORRELATIONS VIEW
-        # ==========================================
+        # ==================================================
+        # CORRELATIONS
+        # ==================================================
 
         elif choice == "5":
 
 
-            print("\nFORENSIC CORRELATIONS")
+            print()
+
+            print("=" * 70)
+
+            print("FORENSIC CORRELATIONS")
 
             print("=" * 70)
 
@@ -270,52 +312,54 @@ def main():
             if correlations:
 
 
-                for c in correlations:
+                for item in correlations:
 
 
+                    print()
 
-                    print("\n" + "-" * 70)
-
+                    print("-" * 70)
 
 
                     print(
 
-                        f"Device      : {c['product']}"
+                        f"Device       : {item['product']}"
 
                     )
 
 
                     print(
 
-                        f"Manufacturer: {c['manufacturer']}"
+                        f"Manufacturer : {item['manufacturer']}"
 
                     )
 
 
                     print(
 
-                        f"Drive       : {c['drive_letter']}"
+                        f"Drive        : {item['drive_letter']}"
 
                     )
 
 
                     print(
 
-                        f"Confidence  : {c['confidence']}%"
+                        f"Confidence   : {item['confidence']}%"
 
                     )
 
 
-                    print("\nReasons:")
+                    print()
+
+                    print("Supporting Evidence:")
 
 
 
-                    for reason in c["reasons"]:
+                    for reason in item["reasons"]:
 
 
                         print(
 
-                            f"- {reason}"
+                            f" - {reason}"
 
                         )
 
@@ -332,10 +376,9 @@ def main():
 
 
 
-
-        # ==========================================
-        # EXPORT CASE
-        # ==========================================
+        # ==================================================
+        # EXPORT
+        # ==================================================
 
         elif choice == "6":
 
@@ -344,10 +387,9 @@ def main():
 
 
 
-
-        # ==========================================
+        # ==================================================
         # EXIT
-        # ==========================================
+        # ==================================================
 
         elif choice == "7":
 
@@ -355,9 +397,11 @@ def main():
             manager.close()
 
 
+            print()
+
             print(
 
-                "\nExiting USB Forensics Analyzer..."
+                "Exiting USB Forensics Analyzer..."
 
             )
 
@@ -371,7 +415,7 @@ def main():
 
             print(
 
-                "Invalid option. Try again."
+                "Invalid option."
 
             )
 

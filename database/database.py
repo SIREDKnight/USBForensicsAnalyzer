@@ -1,5 +1,4 @@
 import sqlite3
-
 from pathlib import Path
 
 
@@ -20,23 +19,28 @@ class EvidenceDatabase:
             DB_FILE
         )
 
+        self.connection.row_factory = sqlite3.Row
+
         self.cursor = self.connection.cursor()
 
         self.create_tables()
 
 
 
-    # ==================================================
-    # CREATE DATABASE TABLES
-    # ==================================================
+    # =====================================================
+    # TABLE CREATION
+    # =====================================================
 
     def create_tables(self):
 
 
         self.cursor.execute("""
-        CREATE TABLE IF NOT EXISTS cases (
+        
+        CREATE TABLE IF NOT EXISTS cases(
 
             id INTEGER PRIMARY KEY AUTOINCREMENT,
+
+            case_id TEXT UNIQUE,
 
             case_name TEXT,
 
@@ -45,12 +49,14 @@ class EvidenceDatabase:
             investigator TEXT
 
         )
+
         """)
 
 
 
         self.cursor.execute("""
-        CREATE TABLE IF NOT EXISTS usb_devices (
+        
+        CREATE TABLE IF NOT EXISTS usb_devices(
 
             id INTEGER PRIMARY KEY AUTOINCREMENT,
 
@@ -60,7 +66,7 @@ class EvidenceDatabase:
 
             revision TEXT,
 
-            serial_number TEXT,
+            serial_number TEXT UNIQUE,
 
             registry_path TEXT,
 
@@ -69,12 +75,14 @@ class EvidenceDatabase:
             hash TEXT
 
         )
+
         """)
 
 
 
         self.cursor.execute("""
-        CREATE TABLE IF NOT EXISTS mounted_devices (
+        
+        CREATE TABLE IF NOT EXISTS mounted_devices(
 
             id INTEGER PRIMARY KEY AUTOINCREMENT,
 
@@ -89,12 +97,14 @@ class EvidenceDatabase:
             hash TEXT
 
         )
+
         """)
 
 
 
         self.cursor.execute("""
-        CREATE TABLE IF NOT EXISTS event_logs (
+        
+        CREATE TABLE IF NOT EXISTS event_logs(
 
             id INTEGER PRIMARY KEY AUTOINCREMENT,
 
@@ -109,12 +119,14 @@ class EvidenceDatabase:
             hash TEXT
 
         )
+
         """)
 
 
 
         self.cursor.execute("""
-        CREATE TABLE IF NOT EXISTS timeline (
+        
+        CREATE TABLE IF NOT EXISTS timeline(
 
             id INTEGER PRIMARY KEY AUTOINCREMENT,
 
@@ -127,6 +139,7 @@ class EvidenceDatabase:
             hash TEXT
 
         )
+
         """)
 
 
@@ -135,41 +148,60 @@ class EvidenceDatabase:
 
 
 
-
-    # ==================================================
-    # CASE FUNCTIONS
-    # ==================================================
+    # =====================================================
+    # CASE MANAGEMENT
+    # =====================================================
 
 
     def create_case(
+
             self,
+
+            case_id,
+
             case_name,
+
             investigator):
 
 
-        self.cursor.execute(
-            """
-            INSERT INTO cases
-            (
-                case_name,
-                created_at,
-                investigator
-            )
+        self.cursor.execute("""
 
-            VALUES
-            (
-                ?,
-                datetime('now'),
-                ?
-            )
-            """,
+        INSERT INTO cases(
 
-            (
-                case_name,
-                investigator
-            )
+            case_id,
+
+            case_name,
+
+            created_at,
+
+            investigator
 
         )
+
+        VALUES(
+
+            ?,
+
+            ?,
+
+            datetime('now'),
+
+            ?
+
+        )
+
+        """,
+
+        (
+
+            case_id,
+
+            case_name,
+
+            investigator
+
+        ))
+
 
 
         self.connection.commit()
@@ -179,316 +211,320 @@ class EvidenceDatabase:
 
 
 
-
     def get_latest_case(self):
 
 
-        self.cursor.execute(
-            """
-            SELECT
+        self.cursor.execute("""
 
-                id,
-                case_name,
-                created_at,
-                investigator
+        SELECT *
 
-            FROM cases
+        FROM cases
 
-            ORDER BY id DESC
+        ORDER BY id DESC
 
-            LIMIT 1
+        LIMIT 1
 
-            """
-        )
+        """)
 
 
         return self.cursor.fetchone()
 
 
 
-
-    # ==================================================
-    # INSERT EVIDENCE
-    # ==================================================
+    # =====================================================
+    # USB DEVICES
+    # =====================================================
 
 
     def insert_device(
+
             self,
+
             device,
+
             case_id,
-            record_hash=None):
+
+            record_hash):
 
 
-        self.cursor.execute(
-            """
-            INSERT INTO usb_devices
+        self.cursor.execute("""
 
-            (
-                manufacturer,
-                product,
-                revision,
-                serial_number,
-                registry_path,
-                case_id,
-                hash
-            )
+        INSERT OR IGNORE INTO usb_devices(
 
-            VALUES
-            (
-                ?,
-                ?,
-                ?,
-                ?,
-                ?,
-                ?,
-                ?
-            )
+            manufacturer,
 
-            """,
+            product,
 
-            (
+            revision,
 
-                device.manufacturer,
+            serial_number,
 
-                device.product,
+            registry_path,
 
-                device.revision,
+            case_id,
 
-                device.serial_number,
-
-                device.registry_path,
-
-                case_id,
-
-                record_hash
-
-            )
+            hash
 
         )
+
+        VALUES(?,?,?,?,?,?,?)
+
+        """,
+
+        (
+
+            device.manufacturer,
+
+            device.product,
+
+            device.revision,
+
+            device.serial_number,
+
+            device.registry_path,
+
+            case_id,
+
+            record_hash
+
+        ))
+
 
 
         self.connection.commit()
 
 
+
+    # =====================================================
+    # MOUNTED DEVICES
+    # =====================================================
 
 
     def insert_mounted_device(
+
             self,
+
             mounted,
+
             case_id,
-            record_hash=None):
+
+            record_hash):
 
 
-        self.cursor.execute(
-            """
-            INSERT INTO mounted_devices
+        self.cursor.execute("""
 
-            (
-                drive_letter,
-                registry_name,
-                volume_guid,
-                case_id,
-                hash
-            )
+        INSERT INTO mounted_devices(
 
-            VALUES
-            (
-                ?,
-                ?,
-                ?,
-                ?,
-                ?
-            )
+            drive_letter,
 
-            """,
+            registry_name,
 
-            (
+            volume_guid,
 
-                mounted.drive_letter,
+            case_id,
 
-                mounted.registry_name,
-
-                mounted.volume_guid,
-
-                case_id,
-
-                record_hash
-
-            )
+            hash
 
         )
+
+        VALUES(?,?,?,?,?)
+
+        """,
+
+        (
+
+            mounted.drive_letter,
+
+            mounted.registry_name,
+
+            mounted.volume_guid,
+
+            case_id,
+
+            record_hash
+
+        ))
+
 
 
         self.connection.commit()
 
 
+
+    # =====================================================
+    # EVENT LOGS
+    # =====================================================
 
 
     def insert_event_log(
+
             self,
-            event,
+
+            event_id,
+
+            source,
+
+            timestamp,
+
+            description,
+
             record_hash=None):
 
 
-        self.cursor.execute(
-            """
-            INSERT INTO event_logs
+        self.cursor.execute("""
 
-            (
-                event_id,
-                source,
-                timestamp,
-                description,
-                hash
-            )
+        INSERT INTO event_logs(
 
-            VALUES
-            (
-                ?,
-                ?,
-                ?,
-                ?,
-                ?
-            )
+            event_id,
 
-            """,
+            source,
 
-            (
+            timestamp,
 
-                event["event_id"],
+            description,
 
-                event["source"],
-
-                event["time"],
-
-                event["description"],
-
-                record_hash
-
-            )
+            hash
 
         )
+
+        VALUES(?,?,?,?,?)
+
+        """,
+
+        (
+
+            event_id,
+
+            source,
+
+            timestamp,
+
+            description,
+
+            record_hash
+
+        ))
+
 
 
         self.connection.commit()
 
 
+
+    # =====================================================
+    # TIMELINE
+    # =====================================================
 
 
     def insert_timeline_event(
+
             self,
+
             event_time,
+
             artifact,
+
             description,
-            record_hash=None):
+
+            record_hash):
 
 
-        self.cursor.execute(
-            """
-            INSERT INTO timeline
+        self.cursor.execute("""
 
-            (
-                event_time,
-                artifact,
-                description,
-                hash
-            )
+        INSERT INTO timeline(
 
-            VALUES
-            (
-                ?,
-                ?,
-                ?,
-                ?
-            )
+            event_time,
 
-            """,
+            artifact,
 
-            (
+            description,
 
-                event_time,
-
-                artifact,
-
-                description,
-
-                record_hash
-
-            )
+            hash
 
         )
+
+        VALUES(?,?,?,?)
+
+        """,
+
+        (
+
+            event_time,
+
+            artifact,
+
+            description,
+
+            record_hash
+
+        ))
+
 
 
         self.connection.commit()
-
-
-
-
-    # ==================================================
-    # QUERY FUNCTIONS
-    # ==================================================
-
-
-    def get_device_by_serial(
-            self,
-            serial):
-
-
-        self.cursor.execute(
-            """
-            SELECT
-
-                manufacturer,
-                product,
-                revision,
-                serial_number,
-                registry_path
-
-            FROM usb_devices
-
-            WHERE serial_number=?
-
-            """,
-
-            (
-                serial,
-            )
-
-        )
-
-
-        return self.cursor.fetchone()
-
 
 
 
     def get_timeline(self):
 
 
-        self.cursor.execute(
-            """
-            SELECT
+        self.cursor.execute("""
 
-                event_time,
-                artifact,
-                description
+        SELECT
 
-            FROM timeline
+            event_time,
 
-            ORDER BY event_time ASC
+            artifact,
 
-            """
-        )
+            description
+
+        FROM timeline
+
+        ORDER BY event_time
+
+        """)
 
 
         return self.cursor.fetchall()
 
 
 
+    # =====================================================
+    # SEARCH
+    # =====================================================
 
-    # ==================================================
+
+    def get_device_by_serial(
+
+            self,
+
+            serial):
+
+
+        self.cursor.execute("""
+
+        SELECT *
+
+        FROM usb_devices
+
+        WHERE serial_number=?
+
+        """,
+
+        (
+
+            serial,
+
+        ))
+
+
+        return self.cursor.fetchone()
+
+
+
+    # =====================================================
     # CLOSE
-    # ==================================================
+    # =====================================================
 
 
     def close(self):
