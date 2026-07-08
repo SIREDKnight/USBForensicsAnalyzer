@@ -1,8 +1,18 @@
 import sqlite3
 from pathlib import Path
+import os
 
 
-DB_FILE = Path("database") / "evidence.db"
+# =====================================================
+# APPLICATION DATA LOCATION
+# =====================================================
+
+APP_DIR = Path(
+    os.getenv("LOCALAPPDATA")
+) / "USBForensicsAnalyzer"
+
+
+DB_FILE = APP_DIR / "database" / "evidence.db"
 
 
 
@@ -12,16 +22,21 @@ class EvidenceDatabase:
     def __init__(self):
 
         DB_FILE.parent.mkdir(
+            parents=True,
             exist_ok=True
         )
+
 
         self.connection = sqlite3.connect(
             DB_FILE
         )
 
+
         self.connection.row_factory = sqlite3.Row
 
+
         self.cursor = self.connection.cursor()
+
 
         self.create_tables()
 
@@ -143,7 +158,6 @@ class EvidenceDatabase:
         """)
 
 
-
         self.connection.commit()
 
 
@@ -201,7 +215,6 @@ class EvidenceDatabase:
             investigator
 
         ))
-
 
 
         self.connection.commit()
@@ -290,7 +303,6 @@ class EvidenceDatabase:
         ))
 
 
-
         self.connection.commit()
 
 
@@ -344,7 +356,6 @@ class EvidenceDatabase:
             record_hash
 
         ))
-
 
 
         self.connection.commit()
@@ -406,7 +417,6 @@ class EvidenceDatabase:
         ))
 
 
-
         self.connection.commit()
 
 
@@ -458,7 +468,6 @@ class EvidenceDatabase:
             record_hash
 
         ))
-
 
 
         self.connection.commit()
