@@ -45,6 +45,45 @@ class TimelineBuilder:
 
     }
 
+    def resolve_device(self, event, devices):
+
+        raw = event.get(
+            "raw_description",
+            ""
+        ).lower()
+
+
+        for device in devices:
+
+            serial = str(
+                device.serial_number
+            ).lower()
+
+
+            product = str(
+                device.product
+            ).lower()
+
+
+            manufacturer = str(
+                device.manufacturer
+            ).lower()
+
+
+            if serial and serial in raw:
+                return device
+
+
+            if product and product in raw:
+                return device
+
+
+            if manufacturer and manufacturer in raw:
+                return device
+
+
+        return None
+
     def build(
             self,
             devices,
@@ -124,9 +163,17 @@ class TimelineBuilder:
         # EVENT LOGS
         # ==================================================
 
+        # ==================================================
+        # EVENT LOGS
+        # ==================================================
+
         for event in event_logs:
 
+            print("\nRAW EVENT")
+            print(event.get("raw_description"))
+
             event_id = event.get("event_id")
+
 
             artifact, description = self.EVENT_MAP.get(
 
@@ -148,6 +195,28 @@ class TimelineBuilder:
 
             )
 
+
+            device = self.resolve_device(
+                event,
+                devices
+            )
+
+
+            if device:
+
+                device_name = (
+
+                    f"{device.manufacturer} "
+                    f"{device.product}"
+
+                )
+
+            else:
+
+                device_name = "Unknown USB Device"
+
+
+
             timeline.append(
 
                 TimelineEvent(
@@ -162,7 +231,12 @@ class TimelineBuilder:
 
                     artifact=artifact,
 
-                    description=description,
+                    description=(
+
+                        f"{description} "
+                        f"({device_name})"
+
+                    ),
 
                     event_id=event_id,
 

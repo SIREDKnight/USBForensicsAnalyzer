@@ -207,6 +207,11 @@ class EventLogCollector(BaseCollector):
 
                     })
 
+                    print("\nUSB EVENT DEBUG")
+                    print("Event ID:", event_id)
+                    print("Source:", source)
+                    print("Raw:", description[:300])
+
 
 
             win32evtlog.CloseEventLog(handle)
