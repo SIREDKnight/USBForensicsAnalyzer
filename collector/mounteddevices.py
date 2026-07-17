@@ -111,11 +111,7 @@ class MountedDevicesCollector(BaseCollector):
                     )
 
 
-                    volume_serial = self.extract_volume_serial(
-
-                        value
-
-                    )
+                    volume_serial = value.hex()
 
 
 

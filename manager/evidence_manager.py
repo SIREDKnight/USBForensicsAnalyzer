@@ -2,6 +2,8 @@ from collector.registry import USBRegistryCollector
 from collector.mounteddevices import MountedDevicesCollector
 from collector.event_logs import EventLogCollector
 from collector.usb_links import USBLinksCollector
+from collector.live_usb import LiveUSBCollector
+
 
 from database.database import EvidenceDatabase
 
@@ -27,6 +29,8 @@ class EvidenceManager:
         self.events = EventLogCollector()
 
         self.usb_links = USBLinksCollector()
+
+        self.live_usb = LiveUSBCollector()
 
         self.timeline_builder = TimelineBuilder()
 
@@ -81,7 +85,6 @@ class EvidenceManager:
         )
 
 
-
         devices = self.registry.collect()
 
         mounted = self.mounted.collect()
@@ -90,25 +93,28 @@ class EvidenceManager:
 
         usb_links = self.usb_links.collect()
 
+        live_usb = self.live_usb.collect()
+
 
 
         print(
             f"[+] USB Devices Found: {len(devices)}"
         )
 
-
         print(
             f"[+] Mounted Devices Found: {len(mounted)}"
         )
-
 
         print(
             f"[+] Event Logs Found: {len(events)}"
         )
 
-
         print(
             f"[+] USB Link Artifacts Found: {len(usb_links)}"
+        )
+
+        print(
+            f"[+] Live USB Devices Found: {len(live_usb)}"
         )
 
 
@@ -119,7 +125,6 @@ class EvidenceManager:
 
         for device in devices:
 
-
             self.database.insert_device(
 
                 device,
@@ -127,9 +132,7 @@ class EvidenceManager:
                 self.case_id,
 
                 HashUtils.sha256(
-
                     device.to_dict()
-
                 )
 
             )
@@ -142,7 +145,6 @@ class EvidenceManager:
 
         for mount in mounted:
 
-
             self.database.insert_mounted_device(
 
                 mount,
@@ -150,9 +152,7 @@ class EvidenceManager:
                 self.case_id,
 
                 HashUtils.sha256(
-
                     mount.to_dict()
-
                 )
 
             )
@@ -165,7 +165,6 @@ class EvidenceManager:
 
         for event in events:
 
-
             self.database.insert_event_log(
 
                 event["event_id"],
@@ -176,11 +175,7 @@ class EvidenceManager:
 
                 event["description"],
 
-                HashUtils.sha256(
-
-                    event
-
-                ),
+                HashUtils.sha256(event),
 
                 self.case_id
 
@@ -206,7 +201,6 @@ class EvidenceManager:
 
         for item in timeline:
 
-
             self.database.insert_timeline_event(
 
                 item.time,
@@ -216,9 +210,7 @@ class EvidenceManager:
                 item.description,
 
                 HashUtils.sha256(
-
                     item.to_dict()
-
                 ),
 
                 item.event_id,
@@ -241,7 +233,9 @@ class EvidenceManager:
 
             mounted,
 
-            usb_links
+            usb_links,
+
+            live_usb
 
         )
 
@@ -287,7 +281,6 @@ class EvidenceManager:
         )
 
 
-
         PDFReport.generate(
 
             case,
@@ -319,199 +312,214 @@ class EvidenceManager:
 
 
     # ==================================================
-    # IMPROVED CORRELATION ENGINE
-    # ==================================================
-
-        # ==================================================
-    # CORRELATION ENGINE
-    # ==================================================
-
-        # ==================================================
     # CORRELATION ENGINE
     # ==================================================
 
     def correlate(
-        self,
-        devices,
-        mounted,
-        usb_links):
+
+            self,
+
+            devices,
+
+            mounted,
+
+            usb_links,
+
+            live_usb):
 
 
         results = []
 
 
+
         for device in devices:
 
-            matched = False
 
-            # ---------------------------------
-            # CHECK EVERY MOUNT FOR THIS DEVICE
-            # ---------------------------------
+            matched_live = None
 
-            for mount in mounted:
+            matched_mount = None
 
-                score = 40
 
-                reasons = [
-                    "USB device enumeration registry evidence found"
-                ]
+            score = 20
 
-                device_match = False
 
-                identifier = str(
-                    getattr(
-                        mount,
-                        "device_identifier",
-                        "UNKNOWN"
-                    )
-                ).lower()
+            reasons = [
 
-                identifier = identifier.replace("#", "&")
+                "USB registry artifact found"
 
-                vendor = device.manufacturer.lower()
-                product = device.product.lower()
-                revision = device.revision.lower()
+            ]
 
-                checks = 0
 
-                if vendor in identifier:
-                    checks += 1
 
-                if product in identifier:
-                    checks += 1
+            # =========================================
+            # MATCH USBSTOR WITH LIVE USB
+            # =========================================
 
-                if revision.replace(".", "") in identifier.replace(".", ""):
-                    checks += 1
+            for live in live_usb:
 
-                if checks >= 2:
-                    device_match = True
 
-                serial_clean = device.serial_number.lower().split("&")[0]
+                device_instance = (
 
-                if serial_clean in identifier:
-                    device_match = True
+                    device.registry_path
 
-                if device.registry_path.lower() in identifier:
-                    device_match = True
+                    .split("USBSTOR\\")
 
-                if device_match:
+                    [-1]
 
-                    matched = True
+                    .lower()
+
+                    .replace("\\", "")
+
+                )
+
+
+
+                live_instance = (
+
+                    live["instance_id"]
+
+                    .split("USBSTOR\\")
+
+                    [-1]
+
+                    .lower()
+
+                    .replace("\\", "")
+
+                )
+
+
+
+                if (
+
+                    device_instance
+
+                    in
+
+                    live_instance
+
+                ):
+
+
+                    matched_live = live
 
                     score += 40
 
+
                     reasons.append(
-                        "Mounted volume matched USB storage identifier"
+
+                        "USBSTOR device matched active USB device"
+
                     )
 
-                    if getattr(device, "container_id", "UNKNOWN") != "UNKNOWN":
-
-                        score += 10
-
-                        reasons.append(
-                            "Device ContainerID recovered from registry"
-                        )
-
-                    if getattr(device, "friendly_name", "UNKNOWN") != "UNKNOWN":
-
-                        score += 10
-
-                        reasons.append(
-                            "Friendly device name recovered"
-                        )
-
-                    results.append({
-
-                        "manufacturer":
-                            device.manufacturer,
-
-                        "product":
-                            device.product,
-
-                        "serial_number":
-                            device.serial_number,
-
-                        "drive_letter":
-                            mount.drive_letter,
-
-                        "volume_guid":
-                            mount.volume_guid,
-
-                        "container_id":
-                            getattr(
-                                device,
-                                "container_id",
-                                "UNKNOWN"
-                            ),
-
-                        "friendly_name":
-                            getattr(
-                                device,
-                                "friendly_name",
-                                "UNKNOWN"
-                            ),
-
-                        "confidence":
-                            score,
-
-                        "reasons":
-                            reasons
-
-                    })
 
                     break
 
-            # ---------------------------------
-            # DEVICE EXISTS BUT NO MOUNT FOUND
-            # ---------------------------------
 
-            if not matched:
 
-                results.append({
+            # =========================================
+            # MATCH DRIVE LETTER
+            # =========================================
 
-                    "manufacturer":
-                        device.manufacturer,
+            if matched_live:
 
-                    "product":
-                        device.product,
 
-                    "serial_number":
-                        device.serial_number,
+                for mount in mounted:
 
-                    "drive_letter":
-                        None,
 
-                    "volume_guid":
-                        None,
+                    if (
 
-                    "container_id":
-                        getattr(
-                            device,
-                            "container_id",
-                            "UNKNOWN"
-                        ),
+                        mount.drive_letter
 
-                    "friendly_name":
-                        getattr(
-                            device,
-                            "friendly_name",
-                            "UNKNOWN"
-                        ),
+                        in
 
-                    "confidence":
-                        50,
+                        matched_live["drive_letters"]
 
-                    "reasons": [
+                    ):
 
-                        "USB device enumeration registry evidence found",
 
-                        "Device metadata recovered",
+                        matched_mount = mount
 
-                        "No mounted volume mapping found"
 
-                    ]
+                        score += 40
 
-                })
+
+                        reasons.append(
+
+                            "Active USB drive mapped to volume"
+
+                        )
+
+
+                        break
+
+
+
+            results.append({
+
+
+                "manufacturer":
+
+                    device.manufacturer,
+
+
+                "product":
+
+                    device.product,
+
+
+                "serial_number":
+
+                    device.serial_number,
+
+
+                "drive_letter":
+
+                    (
+
+                        matched_mount.drive_letter
+
+                        if matched_mount
+
+                        else None
+
+                    ),
+
+
+                "volume_guid":
+
+                    (
+
+                        matched_mount.volume_guid
+
+                        if matched_mount
+
+                        else None
+
+                    ),
+
+
+                "container_id":
+
+                    device.container_id,
+
+
+                "friendly_name":
+
+                    device.friendly_name,
+
+
+                "confidence":
+
+                    min(score,100),
+
+
+                "reasons":
+
+                    reasons
+
+
+            })
 
 
         return results
