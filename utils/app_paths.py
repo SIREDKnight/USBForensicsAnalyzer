@@ -1,5 +1,4 @@
 from pathlib import Path
-import os
 
 
 class AppPaths:
@@ -7,17 +6,20 @@ class AppPaths:
     Stores all writable application folders.
 
     Windows:
-    C:\\Users\\<User>\\AppData\\Local\\USBForensicsAnalyzer
+    C:\\Users\\<User>\\Desktop\\USB Forensics Analyzer
     """
 
-    APP_DIR = (
-        Path(os.getenv("LOCALAPPDATA"))
-        / "USBForensicsAnalyzer"
-    )
+    DESKTOP = Path.home() / "Desktop"
 
-    DATABASE_DIR = APP_DIR / "database"
+    APP_DIR = DESKTOP / "USB Forensics Analyzer"
 
-    OUTPUT_DIR = APP_DIR / "output"
+    DATABASE_DIR = APP_DIR / "Database"
+
+    OUTPUT_DIR = APP_DIR / "Reports"
+
+    EXPORTS_DIR = APP_DIR / "Exports"
+
+    LOGS_DIR = APP_DIR / "Logs"
 
     @staticmethod
     def initialize():
@@ -35,5 +37,13 @@ class AppPaths:
         )
 
         AppPaths.OUTPUT_DIR.mkdir(
+            exist_ok=True
+        )
+
+        AppPaths.EXPORTS_DIR.mkdir(
+            exist_ok=True
+        )
+
+        AppPaths.LOGS_DIR.mkdir(
             exist_ok=True
         )

@@ -16,16 +16,7 @@ AppPaths.initialize()
 class JSONReport:
 
 
-    OUTPUT_DIR = (
-
-        Path(os.getenv("LOCALAPPDATA"))
-
-        / "USBForensicsAnalyzer"
-
-        / "output"
-
-    )
-
+    OUTPUT_DIR = AppPaths.OUTPUT_DIR
 
     OUTPUT_FILE = OUTPUT_DIR / "usb_devices.json"
 

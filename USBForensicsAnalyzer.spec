@@ -5,30 +5,8 @@ a = Analysis(
     ['main.py'],
     pathex=[],
     binaries=[],
-    datas=[
-        ('output', 'output')
-    ],
-
-    hiddenimports=[
-    'collector',
-    'collector.registry',
-    'collector.mounteddevices',
-    'collector.event_logs',
-    'collector.usb_links',
-
-    'database',
-
-    'gui',
-    'manager',
-
-    'models',
-
-    'reports',
-
-    'timeline',
-
-    'utils'
-],
+    datas=[],
+    hiddenimports=[],
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],
@@ -44,7 +22,6 @@ exe = EXE(
     [],
     exclude_binaries=True,
     name='USBForensicsAnalyzer',
-    icon='assets/usb.ico',
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
@@ -55,7 +32,7 @@ exe = EXE(
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
-    manifest='app.manifest',
+    icon=['assets\\usb.ico'],
 )
 coll = COLLECT(
     exe,

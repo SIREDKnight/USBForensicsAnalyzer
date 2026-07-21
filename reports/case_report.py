@@ -13,17 +13,7 @@ AppPaths.initialize()
 
 class CaseReport:
 
-
-    OUTPUT_DIR = (
-
-        Path(os.getenv("LOCALAPPDATA"))
-
-        / "USBForensicsAnalyzer"
-
-        / "output"
-
-    )
-
+    OUTPUT_DIR = AppPaths.OUTPUT_DIR
 
     OUTPUT_FILE = OUTPUT_DIR / "case_report.json"
 
@@ -480,119 +470,50 @@ class CaseReport:
 
 class CaseExport:
 
-
-
-    OUTPUT_DIR = (
-
-        Path(os.getenv("LOCALAPPDATA"))
-
-        / "USBForensicsAnalyzer"
-
-        / "output"
-
-    )
-
-
+    OUTPUT_DIR = AppPaths.EXPORTS_DIR
 
     @staticmethod
     def export(case_id):
 
-
         CaseExport.OUTPUT_DIR.mkdir(
-
+            parents=True,
             exist_ok=True
-
         )
-
-
 
         zip_path = (
-
-            CaseExport.OUTPUT_DIR
-
-            /
-
+            CaseExport.OUTPUT_DIR /
             f"case_{case_id}_export.zip"
-
         )
-
-
 
         files = [
 
+            AppPaths.OUTPUT_DIR / "case_report.pdf",
 
-            CaseExport.OUTPUT_DIR
+            AppPaths.OUTPUT_DIR / "case_report.json",
 
-            /
+            AppPaths.OUTPUT_DIR / "usb_devices.json",
 
-            "case_report.pdf",
-
-
-
-            CaseExport.OUTPUT_DIR
-
-            /
-
-            "case_report.json",
-
-
-
-            CaseReport.OUTPUT_DIR
-
-            /
-
-            "usb_devices.json",
-
-
-
-            Path(os.getenv("LOCALAPPDATA"))
-
-            /
-
-            "USBForensicsAnalyzer"
-
-            /
-
-            "database"
-
-            /
-
-            "evidence.db"
-
+            AppPaths.DATABASE_DIR / "evidence.db"
 
         ]
 
-
-
         with zipfile.ZipFile(
-
             zip_path,
-
             "w",
-
             zipfile.ZIP_DEFLATED
-
         ) as archive:
-
 
             for file in files:
 
-
                 if file.exists():
 
-
                     archive.write(
-
                         file,
-
                         arcname=file.name
-
                     )
-
-
+                else:
+                    print(f"[!] Missing file: {file}")
 
         print(
-
             f"\n[+] Case exported: {zip_path}"
-
         )

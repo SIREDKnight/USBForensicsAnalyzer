@@ -1,13 +1,16 @@
+from importlib.resources import files
 from pathlib import Path
 import json
 import zipfile
+
+from utils.app_paths import AppPaths
 
 
 
 class CaseReport:
 
 
-    OUTPUT_FILE = Path("output") / "case_report.json"
+    OUTPUT_FILE = AppPaths.OUTPUT_DIR / "case_report.json"
 
 
 
@@ -228,80 +231,56 @@ class CaseReport:
 
 class CaseExport:
 
-
-
-    OUTPUT_DIR = Path("output")
-
-
+    OUTPUT_DIR = AppPaths.EXPORTS_DIR
 
     @staticmethod
     def export(case_id):
 
-
         CaseExport.OUTPUT_DIR.mkdir(
+            parents=True,
             exist_ok=True
         )
 
-
         zip_path = (
-
             CaseExport.OUTPUT_DIR /
             f"case_{case_id}_export.zip"
-
         )
-
-
 
         files = [
 
-            CaseExport.OUTPUT_DIR /
-            "case_report.pdf",
+            AppPaths.OUTPUT_DIR / "case_report.pdf",
 
+            AppPaths.OUTPUT_DIR / "case_report.json",
 
-            CaseExport.OUTPUT_DIR /
-            "case_report.json",
+            AppPaths.OUTPUT_DIR / "usb_devices.json",
 
-
-            CaseExport.OUTPUT_DIR /
-            "usb_devices.json",
-
-
-            Path("database") /
-            "evidence.db"
+            AppPaths.DATABASE_DIR / "evidence.db"
 
         ]
 
+        print("\n===== EXPORT DEBUG =====")
 
+        for file in files:
+            print(file)
+            print("Exists:", file.exists())
+
+        print("========================\n")
 
         with zipfile.ZipFile(
-
             zip_path,
-
             "w",
-
             zipfile.ZIP_DEFLATED
-
         ) as archive:
-
 
             for file in files:
 
-
                 if file.exists():
 
-
                     archive.write(
-
                         file,
-
                         arcname=file.name
-
                     )
 
-
-
         print(
-
             f"\n[+] Case exported: {zip_path}"
-
         )
